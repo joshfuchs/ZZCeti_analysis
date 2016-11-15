@@ -16,7 +16,7 @@ Some code here to go find all the text files
 fitting_solutions.txt contains: blue filename, red filenames, best model, best Teff, best logg, FWHM, best chi-square, date-time of fit.
 '''
 
-arr = np.genfromtxt('fitting_solutions.txt',dtype=None,delimiter='\t')
+arr = np.genfromtxt('all_fit_solutions.txt',dtype=None,delimiter='\t')
 blue_file, red_file, best_model, Teff, logg, fwhm, chi_square, date = [], [], [], np.zeros(len(arr)), np.zeros(len(arr)), np.zeros(len(arr)), np.zeros(len(arr)), []
 
 for m in np.arange(len(arr)):
@@ -33,7 +33,10 @@ logg = logg / 1000.
 
 plt.clf()
 plt.plot(Teff,logg,'bo')
-plt.xlim(13000,11700)
-plt.ylim(8.2,7.9)
+plt.xlim(15500,9500)
+plt.ylim(9.75,7.0)
+#Plot Gianninas 2011 instability strip
+plt.plot([14000.,11600.],[8.82,7.36],'r')
+plt.plot([11800,10600],[8.88,7.35],'r')
 plt.show()
 
