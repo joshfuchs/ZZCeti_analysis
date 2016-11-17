@@ -43,16 +43,16 @@ plt.ylim(9.75,7.0)
 plt.plot([14000.,11600.],[8.82,7.36],'r')
 plt.plot([11800,10600],[8.88,7.35],'r')
 #Plot 4 horsemen
-#plt.plot(12740,8.0,'ro')
-#plt.plot(12790,8.0,'ro')
-#plt.plot(12780,8.05,'ro')
-#plt.plot(12790,8.05,'ro')
+#plt.plot(12740,8.0,'ro') #WD1150-153 from 2015-02-10
+#plt.plot(12790,8.0,'ro') #GD 165 from 2015-04-26
+#plt.plot(12780,8.05,'ro') #GD 133 from 2015-05-21
+#plt.plot(12790,8.05,'ro') #L19-2 from 2015-05-22
 #plot ensemble from Chris
 plt.plot(12300,8.05,'ro') #SDSS J1151+0525, EPIC 201802933
 plt.plot(14290,8.50,'ro') #SDSS J0837+1856, EPIC 211914185 low S/N?
 plt.plot(12790,8.05,'ro') #L19-2 from 2015-05-22
 plt.plot(12790,8.00,'ro') #GD 165 from 2015-04-26
-plt.plot(12480,7.94,'ro') #R548 from 2015-08-23
+plt.plot(12480,7.95,'ro') #R548 from 2015-08-23
 plt.plot(11830,7.95,'ro') #SDSS J0840+1303, EPIC 228682478 from 2016-01-07
 plt.plot(12610,8.00,'ro') #SDSS J0051+0339, EPIC 220347759
 plt.show()
