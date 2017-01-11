@@ -10,51 +10,45 @@ import numpy as np
 import os
 
 #Read in normalized spectrum
-
-os.chdir('/afs/cas.unc.edu/depts/physics_astronomy/soar/pipeline/2016/2016-10-11/GOODMAN/VPHAS1813-2138')
-spec1 = 'norm_VPHAS1813-2138_930_blue_flux_10-13_3.35.txt'
-
-#os.chdir('/afs/cas.unc.edu/depts/physics_astronomy/soar/pipeline/2016/2016-08-20/GOODMAN/ZZCETIS')
-#spec1 = 'norm_VPHAS1813-2138_930_blue.FIT_10-13_4.83.txt'
-
+##night1 = '2014-10-13'
+##os.chdir(night1)
+spec1 = 'norm_wtfb.wd1116p026_930_blue_flux_model_11-16_4.16.txt'
 wdlamb,wdinten, wdsigma = np.genfromtxt(spec1,unpack=True)
 
-
-#spec2 = 'norm_WD1422p095_930_blue_flux_CD32_1_07-08_4.75_narrow.txt'
-#lamb2,inten2,sigma2 = np.genfromtxt(spec2,unpack=True)
-
-#Go get the normalized, convoled models
-#os.chdir('/srv/two/jtfuchs/Interpolated_Models/Koester_ML2alpha06/bottom11500_750')
-#os.chdir('/afs/cas.unc.edu/depts/physics_astronomy/clemens/students/group/modelfitting/Bergeron_New')
-os.chdir('/afs/cas.unc.edu/depts/physics_astronomy/clemens/students/group/modelfitting/Koester_06')
-
-#spec2 = 'da7000.0_625.0VPHAS1813-2138_930_blue.FIT_4.83_norm.txt'
-spec2 = 'da12000.0_625.0VPHAS1813-2138_930_blue_flux_3.35_norm.txt'
-title = 'Teff: ' + spec2[2:7] + ' K, ' + 'log(g): ' + spec2[10] + '.' + spec2[11:13]
-modlamb,modinten = np.genfromtxt(spec2,unpack=True,skip_header=1)
+##os.chdir('../')
+#Read in normalized model
+night2 = '2014-12-18'
+##os.chdir(night2)
+spec2 = 'norm_wtfb.wd1116p026_930_blue_flux_gd108_11-16_4.16.txt'
+#title = 'Teff: ' + spec2[2:7] + ' K, ' + 'log(g): ' + spec2[10] + '.' + spec2[11:13]
+modlamb,modinten,modsigma = np.genfromtxt(spec2,unpack=True,skip_header=1)
 
 #plot a second spectrum if you wish
 #spec3 = 'model_WD1422p095_930_blue_modelflux_07-13_6.65.txt'
 #lamb3,inten3 = np.genfromtxt(spec3,unpack=True,skip_header=1)
 
 #Break up spectrum into individual lines for plotting
-
-betalow = 4812.
-betahigh = 4911.
-gammalow = 4281.
-gammahigh = 4374.
-deltalow = 4052. #4031
-deltahigh = 4152. #4191
-epsilonlow = 3940. #3925
-epsilonhigh = 4007. # 4021
-heightlow = 3865. #3859
-heighthigh = 3920. # 3925
+alphalow = 6413.
+alphahigh = 6713.
+betalow = 4721.
+betahigh = 5001.
+gammalow = 4220.
+gammahigh = 4460.
+deltalow = 4031. #4031
+deltahigh = 4191. #4191
+epsilonlow = 3925. #3925
+epsilonhigh = 4021. # 4021
+heightlow = 3859. #3859
+heighthigh = 3925. # 3925
 hninelow = 3815. #3815
 hninehigh = 3855. #3855
 htenlow = 3785. #3785
 htenhigh = 3815.
 
-
+if wdlamb.max() > 6000.:
+            wdlambalpha, wdintenalpha = wdlamb[np.where((wdlamb > alphalow) & (wdlamb < alphahigh+1))], wdinten[np.where((wdlamb > alphalow) & (wdlamb < alphahigh+1.))]
+            modlambalpha, modintenalpha = modlamb[np.where((modlamb > alphalow) & (modlamb < alphahigh+1))], modinten[np.where((modlamb > alphalow) & (modlamb < alphahigh+1.))]
+        
 
 wdlambbeta, wdintenbeta = wdlamb[np.where((wdlamb > betalow) & (wdlamb < betahigh+1))], wdinten[np.where((wdlamb > betalow) & (wdlamb < betahigh+1.))]
 modlambbeta, modintenbeta = modlamb[np.where((modlamb > betalow) & (modlamb < betahigh+1))], modinten[np.where((modlamb > betalow) & (modlamb < betahigh+1.))]
@@ -79,6 +73,9 @@ modlamb10, modinten10 = modlamb[np.where((modlamb > htenlow) & (modlamb < htenhi
 
 
 plt.clf()
+if wdlamb.max() > 6000.:
+    plt.plot(wdlambalpha-6564.6,wdintenalpha-0.3,'k')
+    plt.plot(modlambalpha-6564.6,modintenalpha-0.3,'r')
 plt.plot(wdlambbeta-4862.6,wdintenbeta,'k')
 plt.plot(modlambbeta-4862.6, modintenbeta,'r')
 plt.plot(wdlambgamma-4341.6, wdintengamma+0.3,'k')
@@ -95,6 +92,9 @@ plt.plot(wdlamb10-3798.9,wdinten10+1.8,'k')
 plt.plot(modlamb10-3798.9, modinten10+1.8,'r')
 plt.xlabel('Relative Wavelength (Ang.)')
 plt.ylabel('Relative Flux')
-plt.title(title)
+plt.xlim(-150,150)
+plt.ylim(0,3.5)
+#plt.legend()
+#plt.title(title)
 #plt.savefig('VPHAS1813-2138_12000_625.png',format='png')#,dpi=12000)
 plt.show()

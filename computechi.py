@@ -50,21 +50,24 @@ def fitparaboloid(p,fjac=None,x=None,y=None,z=None,err=None):
     status = 0
     return([status,(z-model)/err])
 
-os.chdir('/afs/cas.unc.edu/depts/physics_astronomy/clemens/students/group/modelfitting/Koester_06/RESULTS')
-#os.chdir('/srv/two/jtfuchs/Interpolated_Models/10teff05logg/RESULTS')
-#os.chdir('/srv/two/jtfuchs/Interpolated_Models/Koester_ML2alpha06/RESULTS')
-
-wdname = 'WD1422p095_930_blue_flux_cd32_1'
-datedone = '06-06_4.75.txt'
+#os.chdir('/afs/cas.unc.edu/depts/physics_astronomy/clemens/students/group/modelfitting/Koester_06/RESULTS')
 
 
-#Set up grid
-teff = np.linspace(11000,14000,13,endpoint=True)
-logg = np.linspace(7.00,9.50,11,endpoint=True)
+wdname = 'wtfb.WD1422p095_930_blue_flux_model'
+datedone = '11-22_meas_7.18.txt'
 
-#Fine Grid
-#teff = np.linspace(10000,13000,301,endpoint=True)
-#logg = np.linspace(7.0,9.0,41,endpoint=True)
+
+#Set up grid. This is saved in the header of the chi*txt file
+bottomt = 10000.
+topt = 15000.
+stept = 10.
+teff = np.linspace(bottomt,topt,(topt-bottomt)/stept+1.,endpoint=True)
+
+bottomg = 7.0 
+topg = 9.5
+stepg = 0.05
+logg = np.linspace(bottomg,topg,(topg-bottomg)/stepg+1.,endpoint=True)
+
 
 teffgrid, logggrid = np.meshgrid(teff,logg)
 
@@ -82,7 +85,11 @@ H10file = 'chi_' + wdname + '_H10_' + datedone
 
 #Read in saved grids
 allchi  = np.genfromtxt(allfile,dtype='d')
-#alphachi = np.genfromtxt(alphafile,dtype='d')
+try:
+    alphachi = np.genfromtxt(alphafile,dtype='d')
+except:
+    print 'No H-alpha file \n'
+    pass
 betachi = np.genfromtxt(betafile,dtype='d')
 gammachi = np.genfromtxt(gammafile,dtype='d')
 deltachi = np.genfromtxt(deltafile,dtype='d')
@@ -92,8 +99,8 @@ H9chi = np.genfromtxt(H9file,dtype='d')
 H10chi = np.genfromtxt(H10file,dtype='d')
 
 #combine different lines
-print allchi.shape
-combined =  betachi + gammachi + deltachi + epsilonchi + H8chi + H9chi + H10chi
+print 'Shape: ', allchi.shape
+combined =  alphachi + betachi + gammachi + deltachi + epsilonchi + H8chi + H9chi + H10chi#alphachi + betachi + gammachi + deltachi + epsilonchi + H8chi + H9chi + H10chi
 
 
 #specify a portion of the grid to extract
@@ -119,9 +126,12 @@ allindex = np.unravel_index(allchi.argmin(),allchi.shape)
 alllogg, allteff = logg[allindex[0]], teff[allindex[1]]
 print 'All: ' , alllogg, allteff
 
-#alphaindex = np.unravel_index(alphachi.argmin(),alphachi.shape)
-#alphalogg, alphateff = logg[alphaindex[0]], teff[alphaindex[1]]
-#print 'Alpha: ' , alphalogg, alphateff
+try:
+    alphaindex = np.unravel_index(alphachi.argmin(),alphachi.shape)
+    alphalogg, alphateff = logg[alphaindex[0]], teff[alphaindex[1]]
+    print 'Alpha: ' , alphalogg, alphateff
+except:
+    pass
 
 betaindex = np.unravel_index(betachi.argmin(),betachi.shape)
 betalogg, betateff = logg[betaindex[0]], teff[betaindex[1]]
@@ -169,6 +179,34 @@ print 'Combined: ' , combinedlogg, combinedteff
 #plt.clf()
 #plt.plot(teff,np.array(H10chi[loggwant,:][0][0]))
 #plt.show()
+
+
+#======================================
+#Remove part of the chi-square grid in a secondary solution is being found.
+'''
+########
+#Upper limit on Teff
+########
+teff_limit = 13000.
+print combined.shape
+teffcut = np.abs(teff-teff_limit).argmin()
+print teffcut
+teff = teff[0:teffcut]
+#print len(teff_new)
+combined = combined[:,0:teffcut]
+'''
+'''
+#######
+#Lower limit on Teff
+teff_limit = 11500.
+print combined.shape
+teffcut = np.abs(teff-teff_limit).argmin()
+print teffcut
+teff = teff[teffcut:]
+#print len(teff_new)
+combined = combined[:,teffcut:]
+'''
+
 
 
 #======================================
@@ -253,12 +291,12 @@ for x in np.arange(len(combinedsmall[:,0])):
 
 
 #Now take these values and fit a polynomial in the Teff direction
-tpol = np.polyfit(teffsmall,chival,3)
+tpol = np.polyfit(teffsmall,chival,2)
 tpp = np.poly1d(tpol)
 
 bestteff = teffsmallfine[tpp(teffsmallfine).argmin()]
-print chival, chival.min()
-print tpp(bestteff)
+#print chival, chival.min()
+#print tpp(bestteff)
 #plt.clf()
 #plt.plot(teffsmall,chival,'g^')
 #plt.plot(teffsmallfine,tpp(teffsmallfine),'k')
@@ -281,18 +319,20 @@ print 'logg = ', loggval.min(),  '+/-' , highloggerr-loggval.min()
 #plt.plot(loggsmallfine,deltalogg)
 #plt.show()
 
-interpolation = RectBivariateSpline(loggsmall,teffsmall,combinedsmall,kx=3,ky=3,s=0) 
+#interpolation = RectBivariateSpline(loggsmall,teffsmall,combinedsmall,kx=3,ky=3,s=0) 
+interpolation = RectBivariateSpline(logg,teff,combined,kx=3,ky=3,s=0) 
 lowchi = interpolation(loggval.min(),bestteff)
-levels = range(0,1000,300)
+levels = [1,2,3,10,100,200,300,400,500,600,700] # range(0,1000,300)
 #plot contour plot
 plt.figure()
-CS = plt.contourf(teffsmall,loggsmall,combinedsmall-lowchi,levels=levels)
-plt.colorbar(CS)
+#CS = plt.contour(teffsmall,loggsmall,combinedsmall-lowchi)#,levels=levels)
+CS = plt.contour(teff,logg,combined-lowchi,levels=levels)
+#plt.colorbar(CS)
 plt.plot(bestteff,loggval.min(),'^')
-plt.xlim(bestteff-250.,bestteff+250.)
-plt.ylim(loggval.min()-0.25,loggval.min()+0.25)
-#plt.clabel(CS,inline=1,fontsize=10)
-plt.show()
+plt.xlim(bestteff+250.,bestteff-250.)
+plt.ylim(loggval.min()+0.25,loggval.min()-0.25)
+plt.clabel(CS,inline=1,fontsize=10)
+#plt.show()
 
 #Check out the following with a smaller grid
 ###cs = plt.pcolor(teffsmall,loggsmall,combinedsmall-tpp(bestteff))
