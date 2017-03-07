@@ -10,18 +10,20 @@ import numpy as np
 import os
 
 #Read in normalized spectrum
-##night1 = '2014-10-13'
-##os.chdir(night1)
-spec1 = 'norm_wtfb.wd1116p026_930_blue_flux_model_11-16_4.16.txt'
-wdlamb,wdinten, wdsigma = np.genfromtxt(spec1,unpack=True)
-
+#night1 = '/afs/cas.unc.edu/depts/physics_astronomy/soar/pipeline/2014/2014-12-10/GOODMAN/ZZCETIS/2017-02-13'#'2014-10-13'
+#os.chdir(night1)
+spec1 = 'norm_wcftb.wd0145-221_930_blue_flux_master_03-07_3.75.txt'
+wdlamb,wdinten, wdsigma = np.genfromtxt(spec1,unpack=True,skip_header=1)
+title = spec1[11:-9] #+ ' : ' + spec1[-14:-9]
+filename = spec1[11:-9]#+'_'+spec1[-14:-9]
 ##os.chdir('../')
 #Read in normalized model
-night2 = '2014-12-18'
-##os.chdir(night2)
-spec2 = 'norm_wtfb.wd1116p026_930_blue_flux_gd108_11-16_4.16.txt'
+#night2 = '/afs/cas.unc.edu/depts/physics_astronomy/soar/pipeline/2016/2016-11-25/GOODMAN/ZZCETIS/2017-02-13'#'2014-12-18'
+#os.chdir(night2)
+spec2 = 'model_wcftb.wd0145-221_930_blue_flux_master_03-07_3.75.txt'
+#spec2 = 'norm_wctfb.WD0709-252_930_blue_flux_model_02-14_4.64.txt'
 #title = 'Teff: ' + spec2[2:7] + ' K, ' + 'log(g): ' + spec2[10] + '.' + spec2[11:13]
-modlamb,modinten,modsigma = np.genfromtxt(spec2,unpack=True,skip_header=1)
+modlamb,modinten = np.genfromtxt(spec2,unpack=True)#,skip_header=1)
 
 #plot a second spectrum if you wish
 #spec3 = 'model_WD1422p095_930_blue_modelflux_07-13_6.65.txt'
@@ -93,8 +95,8 @@ plt.plot(modlamb10-3798.9, modinten10+1.8,'r')
 plt.xlabel('Relative Wavelength (Ang.)')
 plt.ylabel('Relative Flux')
 plt.xlim(-150,150)
-plt.ylim(0,3.5)
+plt.ylim(0,3.0)
 #plt.legend()
 #plt.title(title)
-#plt.savefig('VPHAS1813-2138_12000_625.png',format='png')#,dpi=12000)
+#plt.savefig(filename+'.png',format='png')#,dpi=12000)
 plt.show()

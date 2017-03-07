@@ -50,11 +50,133 @@ def fitparaboloid(p,fjac=None,x=None,y=None,z=None,err=None):
     status = 0
     return([status,(z-model)/err])
 
+
+def find_solution(combined,logg,teff):
+    #======================================
+    # Fit a parabola in the logg direction, then take the minimum from those fits, and fit a parabola in the Teff direction
+    # Find minimum point, move + and - 10 and 10  K to fit 5 parabolas in logg, take those centers, fit parabola
+    combinedindex = np.unravel_index(combined.argmin(),combined.shape)
+    combinedlogg, combinedteff = logg[combinedindex[0]], teff[combinedindex[1]]
+    rangeg = 3. #Number of grid points in logg space around lowest value to pick
+    ranget = 3. #Number of grid points in Teff space around lowest value to pick
+    
+    #pick out region of grid with spacing of rangeg and ranget around the minimum
+    if combinedindex[0]-rangeg < 0:
+        ##loggsmall = logg[0:combinedindex[0]+rangeg+1]
+        loggsmall = logg[0:2*rangeg+1]
+        logglow = 0
+        ##logghigh = combinedindex[0]+rangeg+1
+        logghigh = 2*rangeg+1
+    elif combinedindex[0]+rangeg >= len(logg):
+        ##loggsmall = logg[combinedindex[0]-rangeg:-1]
+        loggsmall = logg[-2*rangeg-1:]
+        ##logglow = combinedindex[0]-rangeg
+        logglow = -2*rangeg-1
+        logghigh = -1
+    else:
+        loggsmall = logg[combinedindex[0]-rangeg:combinedindex[0]+rangeg+1]
+        logglow = combinedindex[0]-rangeg
+        logghigh = combinedindex[0]+rangeg+1
+    if combinedindex[1]-ranget < 0:
+        ##teffsmall = teff[0:combinedindex[1]+ranget+1]
+        teffsmall = teff[0:2*ranget+1]
+        tefflow = 0
+        ##teffhigh = combinedindex[1]+ranget+1
+        teffhigh = 2*ranget+1
+    elif combinedindex[1]+ranget >= len(teff):
+        ##teffsmall = teff[combinedindex[1]-ranget:-1]
+        teffsmall = teff[-2*ranget-1:]
+        ##tefflow = combinedindex[1]-ranget
+        tefflow = -2*ranget-1
+        teffhigh = -1
+    else:
+        teffsmall = teff[combinedindex[1]-ranget:combinedindex[1]+ranget+1]
+        tefflow = combinedindex[1]-ranget
+        teffhigh = combinedindex[1]+ranget+1
+    
+    
+    
+    #Get the low and high values for each
+    lowg, highg = loggsmall[0], loggsmall[-1]
+    lowt, hight = teffsmall[0], teffsmall[-1]
+    teffsmallgrid, loggsmallgrid = np.meshgrid(teffsmall,loggsmall)
+    if (logghigh == -1) and (teffhigh == -1):
+        combinedsmall = combined[logglow:,tefflow:]
+    elif logghigh == -1:
+        combinedsmall = combined[logglow:,tefflow:teffhigh]
+    elif teffhigh == -1:
+        combinedsmall = combined[logglow:logghigh,tefflow:]
+    else:
+        combinedsmall = combined[logglow:logghigh,tefflow:teffhigh]
+
+    #Create finer small grid with spacing of 1 K and 0.005 logg
+    lenteffgrid = np.round(hight-lowt+1.) #Round to ensure we get the correct number of points. Otherwise, occasionally face a strange int/float issue.
+    teffsmallfine = np.linspace(lowt,hight,lenteffgrid,endpoint=True)
+    lenlogggrid = np.round((highg-lowg)*1000.+1.)
+    loggsmallfine = np.linspace(lowg,highg,lenlogggrid,endpoint=True)
+    teffsmallfinegrid, loggsmallfinegrid = np.meshgrid(teffsmallfine,loggsmallfine)
+
+    #Fit a polynomial to different Teff values to find center of logg
+    loggval = np.zeros(len(combinedsmall[:,0]))
+    chival = np.zeros(len(combinedsmall[:,0]))
+    for x in np.arange(len(combinedsmall[:,0])):
+        pol = np.polyfit(loggsmall,combinedsmall[:,x],2)
+        pc = np.poly1d(pol)
+        if x == np.median(np.arange(len(combinedsmall[:,0]))):
+            pckeep = np.poly1d(pol)
+        loggval[x] = loggsmallfine[pc(loggsmallfine).argmin()]
+        chival[x] = pc(loggval[x])
+        #plt.clf()
+        #plt.plot(loggsmall,combinedsmall[:,x],'b^')
+        #plt.plot(loggsmallfine,pc(loggsmallfine))
+        #plt.show()
+
+    #Now take these values and fit a polynomial in the Teff direction
+    tpol = np.polyfit(teffsmall,chival,2)
+    tpp = np.poly1d(tpol)
+
+    bestteff = teffsmallfine[tpp(teffsmallfine).argmin()]
+    #print chival, chival.min()
+    #print tpp(bestteff)
+    #plt.clf()
+    #plt.plot(teffsmall,chival,'g^')
+    #plt.plot(teffsmallfine,tpp(teffsmallfine),'k')
+    #plt.plot(bestteff,tpp(bestteff),'ms')
+    #plt.show()
+
+    #Take these solutions and find the errors
+    deltateff = tpp(teffsmallfine)-tpp(bestteff)
+    lowterr = teffsmallfine[np.where(deltateff < 2.3)].min()-1.
+    highterr =  teffsmallfine[np.where(deltateff < 2.3)].max()+1.
+    tefferr = ((bestteff-lowterr) + (highterr-bestteff)) / 2.
+    
+    deltalogg = pckeep(loggsmallfine) - pckeep(loggval.min())
+    bestlogg = loggval.min()
+    lowloggerr =  loggsmallfine[np.where(deltalogg < 2.3)].min()-0.001
+    highloggerr =  loggsmallfine[np.where(deltalogg < 2.3)].max()+0.001
+    loggerr = ((bestlogg-lowloggerr) + (highloggerr-bestlogg)) / 2.
+    
+    print 'Teff = ', bestteff , '+/-' , tefferr
+    print 'logg = ', bestlogg,  '+/-' , loggerr
+    
+    #plt.clf()
+    #plt.plot(loggsmallfine,deltalogg)
+    #plt.show()
+    return bestteff, tefferr, bestlogg, loggerr
+
+
+
+
+
+
+
+
+
 #os.chdir('/afs/cas.unc.edu/depts/physics_astronomy/clemens/students/group/modelfitting/Koester_06/RESULTS')
 
 
-wdname = 'wtfb.WD1422p095_930_blue_flux_model'
-datedone = '11-22_meas_7.18.txt'
+wdname = 'wcftb.wd1401-147_930_blue_flux_master'
+datedone = '03-07_4.19.txt'
 
 
 #Set up grid. This is saved in the header of the chi*txt file
@@ -100,7 +222,10 @@ H10chi = np.genfromtxt(H10file,dtype='d')
 
 #combine different lines
 print 'Shape: ', allchi.shape
-combined =  alphachi + betachi + gammachi + deltachi + epsilonchi + H8chi + H9chi + H10chi#alphachi + betachi + gammachi + deltachi + epsilonchi + H8chi + H9chi + H10chi
+combined =  betachi + gammachi + deltachi + epsilonchi + H8chi + H9chi + H10chi#alphachi + betachi + gammachi + deltachi + epsilonchi + H8chi + H9chi + H10chi
+b10chi = betachi + gammachi + deltachi + epsilonchi + H8chi + H9chi + H10chi
+g10chi = gammachi + deltachi + epsilonchi + H8chi + H9chi + H10chi
+
 
 
 #specify a portion of the grid to extract
@@ -114,9 +239,9 @@ combined =  alphachi + betachi + gammachi + deltachi + epsilonchi + H8chi + H9ch
 
 
 #plot wireframe and scatter plot of chi-square values
-#fig = plt.figure(1)
-#ax = fig.gca(projection='3d')
-#sur = ax.plot_wireframe(teffgrid,logggrid,combined,rstride=1,cstride=1)
+fig = plt.figure(1)
+ax = fig.gca(projection='3d')
+sur = ax.plot_wireframe(teffgrid,logggrid,combined,rstride=1,cstride=1)
 #ax.scatter(np.ravel(teffsmallgrid),np.ravel(loggsmallgrid),np.ravel(combinedsmall),marker='o',s=30,c='r')
 #plt.show()
 #exit()
@@ -124,46 +249,46 @@ combined =  alphachi + betachi + gammachi + deltachi + epsilonchi + H8chi + H9ch
 #Determine minimum values of each grid
 allindex = np.unravel_index(allchi.argmin(),allchi.shape)
 alllogg, allteff = logg[allindex[0]], teff[allindex[1]]
-print 'All: ' , alllogg, allteff
+#print 'All: ' , alllogg, allteff
 
 try:
     alphaindex = np.unravel_index(alphachi.argmin(),alphachi.shape)
     alphalogg, alphateff = logg[alphaindex[0]], teff[alphaindex[1]]
-    print 'Alpha: ' , alphalogg, alphateff
+    #print 'Alpha: ' , alphalogg, alphateff
 except:
     pass
 
 betaindex = np.unravel_index(betachi.argmin(),betachi.shape)
 betalogg, betateff = logg[betaindex[0]], teff[betaindex[1]]
-print 'Beta: ' , betalogg, betateff
+#print 'Beta: ' , betalogg, betateff
 
 gammaindex = np.unravel_index(gammachi.argmin(),gammachi.shape)
 gammalogg, gammateff = logg[gammaindex[0]], teff[gammaindex[1]]
-print 'Gamma: ' , gammalogg, gammateff
+#print 'Gamma: ' , gammalogg, gammateff
 
 deltaindex = np.unravel_index(deltachi.argmin(),deltachi.shape)
 deltalogg, deltateff = logg[deltaindex[0]], teff[deltaindex[1]]
-print 'Delta: ' , deltalogg, deltateff
+#print 'Delta: ' , deltalogg, deltateff
 
 epsilonindex = np.unravel_index(epsilonchi.argmin(),epsilonchi.shape)
 epsilonlogg, epsilonteff = logg[epsilonindex[0]], teff[epsilonindex[1]]
-print 'Epsilon: ' , epsilonlogg, epsilonteff
+#print 'Epsilon: ' , epsilonlogg, epsilonteff
 
 H8index = np.unravel_index(H8chi.argmin(),H8chi.shape)
 H8logg, H8teff = logg[H8index[0]], teff[H8index[1]]
-print 'H8: ' , H8logg, H8teff
+#print 'H8: ' , H8logg, H8teff
 
 H9index = np.unravel_index(H9chi.argmin(),H9chi.shape)
 H9logg, H9teff = logg[H9index[0]], teff[H9index[1]]
-print 'H9: ' , H9logg, H9teff
+#print 'H9: ' , H9logg, H9teff
 
 H10index = np.unravel_index(H10chi.argmin(),H10chi.shape)
 H10logg, H10teff = logg[H10index[0]], teff[H10index[1]]
-print 'H10: ' , H10logg, H10teff
+#print 'H10: ' , H10logg, H10teff
 
 combinedindex = np.unravel_index(combined.argmin(),combined.shape)
 combinedlogg, combinedteff = logg[combinedindex[0]], teff[combinedindex[1]]
-print 'Combined: ' , combinedlogg, combinedteff
+#print 'Combined: ' , combinedlogg, combinedteff
 #exit()
 
 #Print the chi-square value of a particular grid at a particular point
@@ -187,159 +312,104 @@ print 'Combined: ' , combinedlogg, combinedteff
 ########
 #Upper limit on Teff
 ########
-teff_limit = 13000.
+teff_limit = 14000.
 print combined.shape
 teffcut = np.abs(teff-teff_limit).argmin()
 print teffcut
 teff = teff[0:teffcut]
 #print len(teff_new)
 combined = combined[:,0:teffcut]
+betachi = betachi[:,0:teffcut]
+H9chi = H9chi[:,0:teffcut]
+H8chi = H8chi[:,0:teffcut]
+b10chi = b10chi[:,0:teffcut]
+try:
+    alphachi = alphachi[:,0:teffcut]
+except:
+    pass
 '''
 '''
 #######
 #Lower limit on Teff
-teff_limit = 11500.
+teff_limit = 14700.
 print combined.shape
 teffcut = np.abs(teff-teff_limit).argmin()
 print teffcut
 teff = teff[teffcut:]
 #print len(teff_new)
 combined = combined[:,teffcut:]
+H10chi = H10chi[:,teffcut:]
 '''
 
+#Find solution for whatever combinations you want
+try:
+    print '\nAlpha:'
+    ateff,atefferr,alogg,aloggerr = find_solution(alphachi,logg,teff)
+except:
+    pass
+#exit()
+
+print '\nBeta:'
+bteff,btefferr,blogg,bloggerr = find_solution(betachi,logg,teff)
+print '\nGamma:'
+gteff,gtefferr,glogg,gloggerr = find_solution(gammachi,logg,teff)
+print '\nDelta:'
+dteff,dtefferr,dlogg,dloggerr = find_solution(deltachi,logg,teff)
+print '\nEpsilon:'
+eteff,etefferr,elogg,eloggerr = find_solution(epsilonchi,logg,teff)
+
+print '\nH8:'
+H8teff,H8tefferr,H8logg,H8loggerr = find_solution(H8chi,logg,teff)
 
 
-#======================================
-# Fit a parabola in the logg direction, then take the minimum from those fits, and fit a parabola in the Teff direction
-# Find minimum point, move + and - 10 and 10  K to fit 5 parabolas in logg, take those centers, fit parabola
-combinedindex = np.unravel_index(combined.argmin(),combined.shape)
-combinedlogg, combinedteff = logg[combinedindex[0]], teff[combinedindex[1]]
-rangeg = 3. #Number of grid points in logg space around lowest value to pick
-ranget = 3. #Number of grid points in Teff space around lowest value to pick
-
-#pick out region of grid with spacing of rangeg and ranget around the minimum
-if combinedindex[0]-rangeg < 0:
-    ##loggsmall = logg[0:combinedindex[0]+rangeg+1]
-    loggsmall = logg[0:2*rangeg+1]
-    logglow = 0
-    ##logghigh = combinedindex[0]+rangeg+1
-    logghigh = 2*rangeg+1
-elif combinedindex[0]+rangeg > len(logg):
-    ##loggsmall = logg[combinedindex[0]-rangeg:-1]
-    loggsmall = logg[-2*rangeg-1:]
-    ##logglow = combinedindex[0]-rangeg
-    logglow = -2*rangeg-1
-    logghigh = -1
-else:
-    loggsmall = logg[combinedindex[0]-rangeg:combinedindex[0]+rangeg+1]
-    logglow = combinedindex[0]-rangeg
-    logghigh = combinedindex[0]+rangeg+1
-
-if combinedindex[1]-ranget < 0:
-    ##teffsmall = teff[0:combinedindex[1]+ranget+1]
-    teffsmall = teff[0:2*ranget+1]
-    tefflow = 0
-    ##teffhigh = combinedindex[1]+ranget+1
-    teffhigh = 2*ranget+1
-elif combinedindex[1]+ranget > len(teff):
-    ##teffsmall = teff[combinedindex[1]-ranget:-1]
-    teffsmall = teff[-2*rangeg-1:]
-    ##tefflow = combinedindex[1]-ranget
-    tefflow = -2*rangeg-1
-    teffhigh = -1
-else:
-    teffsmall = teff[combinedindex[1]-ranget:combinedindex[1]+ranget+1]
-    tefflow = combinedindex[1]-ranget
-    teffhigh = combinedindex[1]+ranget+1
+print '\nH9:'
+H9teff,H9tefferr,H9logg,H9loggerr = find_solution(H9chi,logg,teff)
 
 
+print '\nH10:'
+H10teff,H10tefferr,H10logg,H10loggerr = find_solution(H10chi,logg,teff)
 
-#Get the low and high values for each
-lowg, highg = loggsmall[0], loggsmall[-1]
-lowt, hight = teffsmall[0], teffsmall[-1]
+print '\nBeta - H10:'
+b10teff,b10tefferr,b10logg,b10loggerr = find_solution(b10chi,logg,teff)
+print '\nGamma - H10:'
+g10teff,g10tefferr,g10logg,g10loggerr = find_solution(g10chi,logg,teff)
+#print '\nCombined:'
+#combinedteff,combinedtefferr,combinedlogg,combinedloggerr = find_solution(combined,logg,teff)
 
-teffsmallgrid, loggsmallgrid = np.meshgrid(teffsmall,loggsmall)
-if logghigh == -1:
-    combinedsmall = combined[logglow:,tefflow:teffhigh]
-elif teffhigh == -1:
-    combinedsmall = combined[logglow:logghigh,tefflow:]
-else:
-    combinedsmall = combined[logglow:logghigh,tefflow:teffhigh]
-
-#Create finer small grid with spacing of 1 K and 0.005 logg
-lenteffgrid = np.round(hight-lowt+1.) #Round to ensure we get the correct number of points. Otherwise, occasionally face a strange int/float issue.
-teffsmallfine = np.linspace(lowt,hight,lenteffgrid,endpoint=True)
-lenlogggrid = np.round((highg-lowg)*1000.+1.)
-loggsmallfine = np.linspace(lowg,highg,lenlogggrid,endpoint=True)
-teffsmallfinegrid, loggsmallfinegrid = np.meshgrid(teffsmallfine,loggsmallfine)
-
-
-#Fit a polynomial to different Teff values to find center of logg
-loggval = np.zeros(len(combinedsmall[:,0]))
-chival = np.zeros(len(combinedsmall[:,0]))
-for x in np.arange(len(combinedsmall[:,0])):
-    pol = np.polyfit(loggsmall,combinedsmall[:,x],2)
-    pc = np.poly1d(pol)
-    if x == np.median(np.arange(len(combinedsmall[:,0]))):
-        pckeep = np.poly1d(pol)
-    loggval[x] = loggsmallfine[pc(loggsmallfine).argmin()]
-    chival[x] = pc(loggval[x])
-    #plt.clf()
-    #plt.plot(loggsmall,combinedsmall[:,x],'b^')
-    #plt.plot(loggsmallfine,pc(loggsmallfine))
-    #plt.show()
-
-
-#Now take these values and fit a polynomial in the Teff direction
-tpol = np.polyfit(teffsmall,chival,2)
-tpp = np.poly1d(tpol)
-
-bestteff = teffsmallfine[tpp(teffsmallfine).argmin()]
-#print chival, chival.min()
-#print tpp(bestteff)
-#plt.clf()
-#plt.plot(teffsmall,chival,'g^')
-#plt.plot(teffsmallfine,tpp(teffsmallfine),'k')
-#plt.plot(bestteff,tpp(bestteff),'ms')
-#plt.show()
-
-#Take these solutions and find the errors
-deltateff = tpp(teffsmallfine)-tpp(bestteff)
-lowterr = teffsmallfine[np.where(deltateff < 2.3)].min()-1.
-highterr =  teffsmallfine[np.where(deltateff < 2.3)].max()+1.
-
-deltalogg = pckeep(loggsmallfine) - pckeep(loggval.min())
-lowloggerr =  loggsmallfine[np.where(deltalogg < 2.3)].min()-0.001
-highloggerr =  loggsmallfine[np.where(deltalogg < 2.3)].max()+0.001
-
-print 'Teff = ', bestteff , '+/-' , highterr-bestteff
-print 'logg = ', loggval.min(),  '+/-' , highloggerr-loggval.min()
-
-#plt.clf()
-#plt.plot(loggsmallfine,deltalogg)
-#plt.show()
+exit()
 
 #interpolation = RectBivariateSpline(loggsmall,teffsmall,combinedsmall,kx=3,ky=3,s=0) 
 interpolation = RectBivariateSpline(logg,teff,combined,kx=3,ky=3,s=0) 
-lowchi = interpolation(loggval.min(),bestteff)
+#lowchi = interpolation(loggval.min(),bestteff)
 levels = [1,2,3,10,100,200,300,400,500,600,700] # range(0,1000,300)
 #plot contour plot
 plt.figure()
-#CS = plt.contour(teffsmall,loggsmall,combinedsmall-lowchi)#,levels=levels)
-CS = plt.contour(teff,logg,combined-lowchi,levels=levels)
-#plt.colorbar(CS)
-plt.plot(bestteff,loggval.min(),'^')
-plt.xlim(bestteff+250.,bestteff-250.)
-plt.ylim(loggval.min()+0.25,loggval.min()-0.25)
-plt.clabel(CS,inline=1,fontsize=10)
-#plt.show()
+#CS = plt.contour(teff,loggsmall,combinedsmall-lowchi)#,levels=levels)
+CS = plt.contourf(teff,logg,betachi,100,cmap='jet')#,levels=levels)
+plt.colorbar(CS)
+plt.xlim(15000,10000)
+plt.ylim(9.5,7.0)
+#plt.plot(bestteff,loggval.min(),'^')
+#plt.xlim(bestteff+250.,bestteff-250.)
+#plt.ylim(loggval.min()+0.25,loggval.min()-0.25)
+#plt.clabel(CS,inline=1,fontsize=10)
+plt.show()
 
 #Check out the following with a smaller grid
 ###cs = plt.pcolor(teffsmall,loggsmall,combinedsmall-tpp(bestteff))
 ###cb = plt.colorbar(cs)
 
 
+
+
+
+
+
+
 exit() #Below this is some code to fit an elliptic paraboloid to the surface, as well as doing a cubic spline interpolation. These are just other options.
+
+
+
 
 
 '''
