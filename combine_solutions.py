@@ -15,15 +15,15 @@ directories = [x[0] for x in os.walk('./') if x[0][0:3]=='./2']
 
 outpdf = PdfFileMerger()
 
-with open('all_fit_solutions.txt','wb') as outfile:
+with open('all_solutions.txt','wb') as outfile:
     for xdir in directories:
         os.chdir(xdir)
-        pdfs = glob('*.pdf')
+        pdfs = glob('fit*master*.pdf')
         for f in pdfs:
             outpdf.append(open(f),'rb')
         with open('fitting_solutions.txt','rb') as infile:
             outfile.write(infile.read())
         os.chdir('../')
 
-outpdf.write(open('Pseudo_fits.pdf','wb'))
+outpdf.write(open('Pseudo_fits_flux.pdf','wb'))
 

@@ -15,45 +15,29 @@ Some code here to go find all the text files
 '''
 fitting_solutions.txt contains: blue filename, red filenames, best model, best Teff, best logg, FWHM, best chi-square, date-time of fit.
 '''
-'''
-arr = np.genfromtxt('all_fit_solutions.txt',dtype=None,delimiter='\t')
-blue_file, red_file, best_model, Teff, logg, fwhm, chi_square, date = [], [], [], np.zeros(len(arr)), np.zeros(len(arr)), np.zeros(len(arr)), np.zeros(len(arr)), []
-
-for m in np.arange(len(arr)):
-    blue_file.append(arr[m][0])
-    red_file.append(arr[m][1])
-    best_model.append(arr[m][2])
-    Teff[m] = arr[m][3]
-    logg[m] = arr[m][4]
-    fwhm[m] = arr[m][5]
-    chi_square[m] = arr[m][6]
-    date.append(arr[m][7])
-
-logg = logg / 1000.
-'''
-'''
-arr = np.genfromtxt('all_teff_logg.txt',dtype=None,delimiter='\t')
-blue_file, date, Teff, Tefferr, logg, loggerr = [], [], np.zeros(len(arr)), np.zeros(len(arr)), np.zeros(len(arr)), np.zeros(len(arr))
-
-for m in np.arange(len(arr)):
-    blue_file.append(arr[m][0])
-    date.append(arr[m][1])
-    Teff[m] = arr[m][2]
-    Tefferr[m] = arr[m][3]
-    logg[m] = arr[m][4]
-    loggerr[m] = arr[m][5]
-'''
-
-catalog = Table.read('full_catalog.txt',format='ascii')  
 
 
-task = raw_input('What would you like to see? (star, range, filter, duplicates) ')
+
+catalog = Table.read('catalog_flux_clean.txt',format='ascii')  
+
+
+task = raw_input('What would you like to see? (star, range, filter, duplicates, allstars, K2) ')
 
 if task == 'star':
     star_name = raw_input('Name of the star? ')
     for x in range(0,len(catalog['FILENAME'])):
         if catalog['FILENAME'][x].lower().__contains__(star_name.lower()) == True:
-            print catalog['FILENAME'][x], catalog['DATE-OBS'][x], catalog['Teff'][x], catalog['Tefferr'][x],  catalog['logg'][x], catalog['loggerr'][x]
+            print catalog['FILENAME'][x], catalog['DATE-OBS'][x], catalog['b10teff'][x], catalog['b10tefferr'][x],  catalog['b10logg'][x], catalog['b10loggerr'][x], catalog['EXPTIME'][x], catalog['Magnitude'][x]
+            #print 'b10: ', catalog['b10teff'][x], catalog['b10logg'][x]
+            #print 'alpha: ', catalog['ateff'][x], catalog['alogg'][x]
+            #print 'beta: ', catalog['bteff'][x], catalog['blogg'][x]
+            #print 'gamma: ', catalog['gteff'][x], catalog['glogg'][x]
+            #print 'delta: ', catalog['dteff'][x], catalog['dlogg'][x]
+            #print 'epsilon: ', catalog['eteff'][x], catalog['elogg'][x]
+            #print 'H8: ', catalog['H8teff'][x], catalog['H8logg'][x]
+            #print 'H9: ', catalog['H9teff'][x], catalog['H9logg'][x]
+            #print 'H10: ', catalog['H10teff'][x], catalog['H10logg'][x]
+            #print catalog[x]
 
 if task == 'range':
     trange = raw_input('Would you like to set a temperature range? (yes/no) ')
@@ -70,9 +54,9 @@ if task == 'range':
     else:
         glower = 1.
         gupper = 20.
-    for x in np.arange(len(catalog['Teff'])):
-        if catalog['Teff'][x] <= tupper and catalog['Teff'][x] >= tlower and catalog['logg'][x] <= gupper and catalog['logg'][x] >= glower:
-            print catalog['FILENAME'][x], catalog['DATE-OBS'][x], catalog['Teff'][x], catalog['Tefferr'][x], catalog['logg'][x], catalog['loggerr'][x]#,catalog['DAV'][x]
+    for x in np.arange(len(catalog['ateff'])):
+        if catalog['ateff'][x] <= tupper and catalog['ateff'][x] >= tlower and catalog['alogg'][x] <= gupper and catalog['alogg'][x] >= glower:
+            print catalog['FILENAME'][x], catalog['DATE-OBS'][x], catalog['ateff'][x], catalog['alogg'][x]#,catalog['DAV'][x]
 
 if task == 'filter':
     which_filter = raw_input('Name of filter (DAV,K2,outburst): ')
@@ -88,3 +72,12 @@ if task == 'duplicates':
         for y in range(0,len(catalog['FILENAME'])):
             if np.abs(catalog['RA'][x]-catalog['RA'][y]) < 0.01 and catalog['DATE-OBS'][x] != catalog['DATE-OBS'][y]:
                 print catalog['FILENAME'][x], catalog['DATE-OBS'][x], catalog['FILENAME'][y], catalog['DATE-OBS'][y]
+
+if task == 'allstars':
+    for x in range(0,len(catalog['FILENAME'])):
+        print catalog['WD'][x]
+
+if task == 'K2':
+    for x in range(0,len(catalog['FILENAME'])):
+        if catalog['K2'][x] == 1:
+            print catalog['WD'][x], catalog['DATE-OBS'][x], catalog['b10teff'][x], catalog['b10logg'][x], catalog['g10teff'][x], catalog['g10logg'][x]

@@ -89,7 +89,7 @@ def matchpos(ra1,dec1,ra2,dec2,tol):
     return np.array(ibest),np.array(sep)
 
 
-observed_table = Table.read('coords_fits_names.txt',format='ascii')
+observed_table = Table.read('model_results.txt',format='ascii')
 
 print observed_table.colnames
 
@@ -121,6 +121,7 @@ new_order= np.sort(ibest)
 catalog_RA =  np.array(catalog_data['RA'][ibest])
 catalog_DEC =  np.array(catalog_data['DEC'][ibest])
 catalog_WDname =  np.array(catalog_data['WD Name'][ibest])
+catalog_othername = np.array(catalog_data['Other Name'][ibest])
 catalog_dav =  np.array(catalog_data['DAV/NOV'][ibest])
 catalog_k2 =  np.array(catalog_data['K2'][ibest])
 catalog_outburst =  np.array(catalog_data['Outburster'][ibest])
@@ -133,5 +134,27 @@ catalog_p = np.array(catalog_data['<P>'][ibest])
 
 #Take those matching indices and combine the tables
 
-info = Table([observed_table['WD'],observed_table['FILENAME'],observed_table['DATE-OBS'],observed_table['DATE-OBS2'],observed_table['RA'],observed_table['DEC'],observed_table['Airmass'],observed_table['Teff'],observed_table['Tefferr'],observed_table['logg'],observed_table['loggerr'],catalog_WDname,catalog_RA,catalog_DEC,catalog_dav,catalog_k2,catalog_outburst,catalog_mag,catalog_novlim,catalog_p],names=('WD','FILENAME','DATE-OBS','DATE-OBS2','RA','DEC','Airmass','Teff','Tefferr','logg','loggerr','WD2','RA2','DEC2','DAV','K2','outburst','Magnitude','NOV_Lim','P'))
-info.write('full_catalog.txt',format='ascii')
+info = Table([observed_table['WD'],observed_table['FILENAME'],catalog_WDname,catalog_othername,observed_table['DATE-OBS'],observed_table['DATE-OBS2'],observed_table['RA'],observed_table['DEC'],observed_table['Airmass'],observed_table['SNR'],observed_table['EXPTIME'],observed_table['Seeing'],observed_table['a10teff'],observed_table['a10tefferr'],observed_table['a10logg'],observed_table['a10loggerr'],observed_table['b10teff'],observed_table['b10tefferr'],observed_table['b10logg'],observed_table['b10loggerr'],observed_table['g10teff'],observed_table['g10tefferr'],observed_table['g10logg'],observed_table['g10loggerr'],observed_table['b9teff'],observed_table['b9tefferr'],observed_table['b9logg'],observed_table['b9loggerr'],observed_table['b8teff'],observed_table['b8tefferr'],observed_table['b8logg'],observed_table['b8loggerr'],observed_table['ateff'],observed_table['atefferr'],observed_table['alogg'],observed_table['aloggerr'],observed_table['bteff'],observed_table['btefferr'],observed_table['blogg'],observed_table['bloggerr'],observed_table['gteff'],observed_table['gtefferr'],observed_table['glogg'],observed_table['gloggerr'],observed_table['dteff'],observed_table['dtefferr'],observed_table['dlogg'],observed_table['dloggerr'],observed_table['eteff'],observed_table['etefferr'],observed_table['elogg'],observed_table['eloggerr'],observed_table['H8teff'],observed_table['H8tefferr'],observed_table['H8logg'],observed_table['H8loggerr'],observed_table['H9teff'],observed_table['H9tefferr'],observed_table['H9logg'],observed_table['H9loggerr'],observed_table['H10teff'],observed_table['H10tefferr'],observed_table['H10logg'],observed_table['H10loggerr'],catalog_RA,catalog_DEC,catalog_dav,catalog_k2,catalog_outburst,catalog_mag,catalog_novlim,catalog_p],names=['WD','FILENAME','WDName','OtherName','DATE-OBS','DATE-OBS2','RA','DEC','Airmass','SNR','EXPTIME','Seeing','a10teff','a10tefferr','a10logg','a10loggerr','b10teff','b10tefferr','b10logg','b10loggerr','g10teff','g10tefferr','g10logg','g10loggerr','b9teff','b9tefferr','b9logg','b9loggerr','b8teff','b8tefferr','b8logg','b8loggerr','ateff','atefferr','alogg','aloggerr','bteff','btefferr','blogg','bloggerr','gteff','gtefferr','glogg','gloggerr','dteff','dtefferr','dlogg','dloggerr','eteff','etefferr','elogg','eloggerr','H8teff','H8tefferr','H8logg','H8loggerr','H9teff','H9tefferr','H9logg','H9loggerr','H10teff','H10tefferr','H10logg','H10loggerr','RA2','DEC2','DAV','K2','outburst','Magnitude','NOV_Lim','P'])
+
+#Sort the table by RA
+info.sort('RA')
+
+#Add column for duplicates
+duplicates = np.zeros(len(info['RA']))
+for x in range(len(info['RA'])):
+    if x == (len(info['RA'])-1):
+        if np.abs(info['RA'][x] - info['RA'][x-1]) < 0.05 and np.abs(info['DEC'][x] - info['DEC'][x-1]) < 0.05:
+            duplicates[x] = 1.
+    elif np.abs(info['RA'][x] - info['RA'][x+1]) < 0.05 and np.abs(info['DEC'][x] - info['DEC'][x+1]) < 0.05:
+        #print  info['WD'][x], info['RA'][x], info['DEC'][x],catalog['WD'][x+1], info['RA'][x+1], info['DEC'][x+1]
+        duplicates[x] = 1.
+    elif np.abs(info['RA'][x] - info['RA'][x-1]) < 0.05 and np.abs(info['DEC'][x] - info['DEC'][x-1]) < 0.05:
+        duplicates[x] = 1.
+
+    #print info['WD'][x], duplicates[x]
+
+info['Duplicates'] = duplicates
+
+
+print info.colnames
+info.write('catalog_model.txt',format='ascii')

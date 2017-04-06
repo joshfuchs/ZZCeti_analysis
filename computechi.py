@@ -175,9 +175,10 @@ def find_solution(combined,logg,teff):
 #os.chdir('/afs/cas.unc.edu/depts/physics_astronomy/clemens/students/group/modelfitting/Koester_06/RESULTS')
 
 
-wdname = 'wcftb.wd1401-147_930_blue_flux_master'
-datedone = '03-07_4.19.txt'
-
+wdname = 'wcftb.WD2348-244_930_blue_flux_master'
+datedone = '03-08_7.94.txt'
+cutteff = True
+teff_limit = 14200.
 
 #Set up grid. This is saved in the header of the chi*txt file
 bottomt = 10000.
@@ -223,9 +224,14 @@ H10chi = np.genfromtxt(H10file,dtype='d')
 #combine different lines
 print 'Shape: ', allchi.shape
 combined =  betachi + gammachi + deltachi + epsilonchi + H8chi + H9chi + H10chi#alphachi + betachi + gammachi + deltachi + epsilonchi + H8chi + H9chi + H10chi
+try:
+    a10chi = alphachi + betachi + gammachi + deltachi + epsilonchi + H8chi + H9chi + H10chi
+except:
+    pass
 b10chi = betachi + gammachi + deltachi + epsilonchi + H8chi + H9chi + H10chi
 g10chi = gammachi + deltachi + epsilonchi + H8chi + H9chi + H10chi
-
+b9chi = betachi + gammachi + deltachi + epsilonchi + H8chi + H9chi
+b8chi = betachi + gammachi + deltachi + epsilonchi + H8chi
 
 
 #specify a portion of the grid to extract
@@ -308,26 +314,30 @@ combinedlogg, combinedteff = logg[combinedindex[0]], teff[combinedindex[1]]
 
 #======================================
 #Remove part of the chi-square grid in a secondary solution is being found.
-'''
-########
-#Upper limit on Teff
-########
-teff_limit = 14000.
-print combined.shape
-teffcut = np.abs(teff-teff_limit).argmin()
-print teffcut
-teff = teff[0:teffcut]
-#print len(teff_new)
-combined = combined[:,0:teffcut]
-betachi = betachi[:,0:teffcut]
-H9chi = H9chi[:,0:teffcut]
-H8chi = H8chi[:,0:teffcut]
-b10chi = b10chi[:,0:teffcut]
-try:
-    alphachi = alphachi[:,0:teffcut]
-except:
-    pass
-'''
+if cutteff:
+    ########
+    #Upper limit on Teff
+    ########
+    #teff_limit = 14500.
+    print combined.shape
+    teffcut = np.abs(teff-teff_limit).argmin()
+    print teffcut
+    teff = teff[0:teffcut]
+    #print len(teff_new)
+    combined = combined[:,0:teffcut]
+    betachi = betachi[:,0:teffcut]
+    H9chi = H9chi[:,0:teffcut]
+    H8chi = H8chi[:,0:teffcut]
+    b10chi = b10chi[:,0:teffcut]
+    g10chi = g10chi[:,0:teffcut]
+    b9chi = b9chi[:,0:teffcut]
+    b8chi = b8chi[:,0:teffcut]
+    try:
+        alphachi = alphachi[:,0:teffcut]
+        a10chi = a10chi[:,0:teffcut]
+    except:
+        pass
+
 '''
 #######
 #Lower limit on Teff
@@ -345,34 +355,43 @@ H10chi = H10chi[:,teffcut:]
 try:
     print '\nAlpha:'
     ateff,atefferr,alogg,aloggerr = find_solution(alphachi,logg,teff)
+    print '\nAlpha-10:'
+    a10teff,a10tefferr,a10logg,a10loggerr = find_solution(a10chi,logg,teff)
 except:
     pass
 #exit()
 
 print '\nBeta:'
 bteff,btefferr,blogg,bloggerr = find_solution(betachi,logg,teff)
-print '\nGamma:'
-gteff,gtefferr,glogg,gloggerr = find_solution(gammachi,logg,teff)
-print '\nDelta:'
-dteff,dtefferr,dlogg,dloggerr = find_solution(deltachi,logg,teff)
-print '\nEpsilon:'
-eteff,etefferr,elogg,eloggerr = find_solution(epsilonchi,logg,teff)
+exit()
+#print '\nGamma:'
+#gteff,gtefferr,glogg,gloggerr = find_solution(gammachi,logg,teff)
+#print '\nDelta:'
+#dteff,dtefferr,dlogg,dloggerr = find_solution(deltachi,logg,teff)
+#print '\nEpsilon:'
+#eteff,etefferr,elogg,eloggerr = find_solution(epsilonchi,logg,teff)
 
-print '\nH8:'
-H8teff,H8tefferr,H8logg,H8loggerr = find_solution(H8chi,logg,teff)
-
-
-print '\nH9:'
-H9teff,H9tefferr,H9logg,H9loggerr = find_solution(H9chi,logg,teff)
+#print '\nH8:'
+#H8teff,H8tefferr,H8logg,H8loggerr = find_solution(H8chi,logg,teff)
 
 
-print '\nH10:'
-H10teff,H10tefferr,H10logg,H10loggerr = find_solution(H10chi,logg,teff)
+#print '\nH9:'
+#H9teff,H9tefferr,H9logg,H9loggerr = find_solution(H9chi,logg,teff)
+
+
+#print '\nH10:'
+#H10teff,H10tefferr,H10logg,H10loggerr = find_solution(H10chi,logg,teff)
 
 print '\nBeta - H10:'
 b10teff,b10tefferr,b10logg,b10loggerr = find_solution(b10chi,logg,teff)
 print '\nGamma - H10:'
 g10teff,g10tefferr,g10logg,g10loggerr = find_solution(g10chi,logg,teff)
+
+print '\nBeta - H9:'
+b9teff,b9tefferr,b9logg,b9loggerr = find_solution(b9chi,logg,teff)
+print '\nBeta - H9:'
+b8teff,b8tefferr,b8logg,b8loggerr = find_solution(b8chi,logg,teff)
+
 #print '\nCombined:'
 #combinedteff,combinedtefferr,combinedlogg,combinedloggerr = find_solution(combined,logg,teff)
 

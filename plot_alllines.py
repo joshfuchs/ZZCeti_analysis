@@ -14,12 +14,12 @@ from glob import glob
 #Get list of directories in current directory. Only keep if it is a date by looking for ./2
 directories = [x[0] for x in os.walk('./') if x[0][0:3]=='./2']
 
-plots_pdf = PdfPages('all_plotfits.pdf')
+plots_pdf = PdfPages('all_plotfits_model.pdf')
 
 for xdir in directories:
     os.chdir(xdir)
-    wds = sorted(glob('norm_*txt'))
-    models = sorted(glob('model_*txt'))
+    wds = sorted(glob('norm_*model*txt'))
+    models = sorted(glob('model_*model*txt'))
     #print xdir
     #print wds
     #print models

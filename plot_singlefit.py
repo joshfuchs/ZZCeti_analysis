@@ -12,16 +12,16 @@ import os
 #Read in normalized spectrum
 #night1 = '/afs/cas.unc.edu/depts/physics_astronomy/soar/pipeline/2014/2014-12-10/GOODMAN/ZZCETIS/2017-02-13'#'2014-10-13'
 #os.chdir(night1)
-spec1 = 'norm_wcftb.wd0145-221_930_blue_flux_master_03-07_3.75.txt'
-wdlamb,wdinten, wdsigma = np.genfromtxt(spec1,unpack=True,skip_header=1)
+spec1 = 'model_wcftb.WD1116p026_930_blue_flux_master_ext_03-15_3.91.txt'
+wdlamb,wdinten = np.genfromtxt(spec1,unpack=True,skip_header=1)
 title = spec1[11:-9] #+ ' : ' + spec1[-14:-9]
 filename = spec1[11:-9]#+'_'+spec1[-14:-9]
 ##os.chdir('../')
 #Read in normalized model
 #night2 = '/afs/cas.unc.edu/depts/physics_astronomy/soar/pipeline/2016/2016-11-25/GOODMAN/ZZCETIS/2017-02-13'#'2014-12-18'
 #os.chdir(night2)
-spec2 = 'model_wcftb.wd0145-221_930_blue_flux_master_03-07_3.75.txt'
-#spec2 = 'norm_wctfb.WD0709-252_930_blue_flux_model_02-14_4.64.txt'
+spec2 = 'model_wcftb.WD1116p026_930_blue_flux_master_noext_03-15_3.91.txt'
+#spec2 = 'norm_wcftb.WD1116p026_930_blue_flux_master_noext_03-14_3.91.txt'
 #title = 'Teff: ' + spec2[2:7] + ' K, ' + 'log(g): ' + spec2[10] + '.' + spec2[11:13]
 modlamb,modinten = np.genfromtxt(spec2,unpack=True)#,skip_header=1)
 
