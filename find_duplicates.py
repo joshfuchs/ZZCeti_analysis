@@ -1,13 +1,21 @@
 '''
 Search through table and find duplicate observations. Use desired criteria to combine observations.
+Remove duplicate rows.
 
+The criterion to find duplicates is a difference in the decliation of less than 0.1 degrees. If there are targets with declinations closer than this to each other, you should change this.
+
+Written by JT Fuchs, 7 April 2017
+
+INPUT: Table of results, sorted by RA.
+
+OUTPUT: Table of results with merged duplicates
 
 '''
 
 import numpy as np
 from astropy.table import Table
 
-catalog = Table.read('catalog_flux_clean.txt',format='ascii')
+catalog = Table.read('windycatalog_master.txt',format='ascii')
 #print catalog.colnames
 #exit()
 
@@ -15,9 +23,10 @@ duplicate_rows = []
 
 x = 0
 while x < len(catalog['WD']):
-    print ''
+    #print ''
     if catalog['Duplicates'][x] == 1:
         #print catalog['WD'][x]
+        duplicate_rows.append(x) #Include this if you want the rows of ALL duplicates
         if (len(catalog['WD']) - x) < 10:
             searchrange = (len(catalog['WD']) - x)
         else:
@@ -28,11 +37,11 @@ while x < len(catalog['WD']):
             if np.abs(catalog['DEC2'][x]-catalog['DEC2'][x+m]) < 0.1:
                 #print 'found match'
                 y = m
-                print x+y
+                #print x+y
                 duplicate_rows.append(x+y)
         #print x, y, m
-        print catalog['WD'][x:x+y+1]
-
+        #print catalog['WD'][x:x+y+1]
+        '''
         #Combine the values for each teff and logg measurement. Replace the values from the first row and remove duplicate rows
         catalog['a10teff'][x] = np.mean(catalog['a10teff'][x:x+y+1])
         catalog['a10logg'][x] = np.mean(catalog['a10logg'][x:x+y+1])
@@ -74,7 +83,7 @@ while x < len(catalog['WD']):
 
         catalog['H10teff'][x] = np.mean(catalog['H10teff'][x:x+y+1])
         catalog['H10logg'][x] = np.mean(catalog['H10logg'][x:x+y+1])
-
+        '''
         #if m == 0:
         #    catalog.remove_row(x+y)
         #else:
@@ -90,3 +99,19 @@ while x < len(catalog['WD']):
 print duplicate_rows
 #catalog.remove_rows(duplicate_rows)
 #catalog.write('test_nodup.txt',format='ascii')
+
+
+#Create table
+#Save WD, Filename, Othername, DAte obs, Ra, DEC, Airmass, SNR, EXPTIME, Seeing, b10teff, b10logg, Magnitude
+
+#long
+#newtable = Table([catalog['WD'][duplicate_rows],catalog['OtherName'][duplicate_rows],catalog['DATE-OBS'][duplicate_rows],catalog['RA'][duplicate_rows],catalog['DEC'][duplicate_rows],catalog['Airmass'][duplicate_rows],catalog['SNR'][duplicate_rows],catalog['EXPTIME'][duplicate_rows],catalog['Seeing'][duplicate_rows],catalog['MOUNTAZ'][duplicate_rows],catalog['WINDAZ'][duplicate_rows],catalog['WINDSPEED'][duplicate_rows],catalog['b10teff'][duplicate_rows],catalog['b10logg'][duplicate_rows],catalog['Magnitude'][duplicate_rows]],names=['WD','OTHERNAME','DATE-OBS','RA','DEC','AIRMASS','SNR','EXPTIME','SEEING','MOUNTAZ','WINDAZ','WINDSPEED','b10teff','b10logg','MAGNITUDE'])
+
+#short
+newtable = Table([catalog['WD'][duplicate_rows],catalog['DATE-OBS'][duplicate_rows],catalog['Airmass'][duplicate_rows],catalog['SNR'][duplicate_rows],catalog['EXPTIME'][duplicate_rows],catalog['Seeing'][duplicate_rows],catalog['MOUNTAZ'][duplicate_rows],catalog['WINDAZ'][duplicate_rows],catalog['WINDSPEED'][duplicate_rows],catalog['b10teff'][duplicate_rows],catalog['b10logg'][duplicate_rows],catalog['Magnitude'][duplicate_rows]],names=['WD','DATE-OBS','AIRMASS','SNR','EXPTIME','SEEING','MOUNTAZ','WINDAZ','WINDSPEED','b10teff','b10logg','MAGNITUDE'])
+
+
+#print newtable
+
+#newtable.write('WINDY_duplicates.txt',format='ascii')
+#newtable.write('WINDY_duplicates_latex.txt',format='latex')

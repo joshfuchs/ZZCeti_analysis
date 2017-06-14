@@ -12,14 +12,17 @@ import os
 from glob import glob
 
 #Get list of directories in current directory. Only keep if it is a date by looking for ./2
-directories = [x[0] for x in os.walk('./') if x[0][0:3]=='./2']
+##directories = [x[0] for x in os.walk('./') if x[0][0:3]=='./2']
+directories = [x[0] for x in os.walk('./') if x[0][-1]=='A']
 
-plots_pdf = PdfPages('all_plotfits_model.pdf')
+plots_pdf = PdfPages('all_plotfits.pdf')
 
 for xdir in directories:
     os.chdir(xdir)
-    wds = sorted(glob('norm_*model*txt'))
-    models = sorted(glob('model_*model*txt'))
+    ##wds = sorted(glob('norm_*master*txt'))
+    wds = sorted(glob('norm_*txt'))
+    ##models = sorted(glob('model_*master*txt'))
+    models = sorted(glob('model_*txt'))
     #print xdir
     #print wds
     #print models
@@ -28,7 +31,7 @@ for xdir in directories:
         wdlamb,wdinten, wdsigma = np.genfromtxt(y,unpack=True,skip_header=1)
         modlamb,modinten = np.genfromtxt(models[wds.index(y)],unpack=True)
         #print y, models[wds.index(y)]
-        title = str(xdir) + ': ' + str(y[10:y.find('930')])
+        title = str(xdir) + ': ' + str(y[3:y.find('930')])
 
         #Break up spectrum into individual lines for plotting
         alphalow = 6413.

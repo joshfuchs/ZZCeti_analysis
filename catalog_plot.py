@@ -4,7 +4,7 @@ from astropy.table import Table
 
 
 
-catalog = Table.read('catalog_flux_clean.txt',format='ascii')
+catalog = Table.read('catalog_flux_clean_nodup.txt',format='ascii')
 #print catalog.colnames
 
 #print catalog
@@ -55,12 +55,12 @@ for x in range(len(catalog['b10teff'])):
     if catalog['Magnitude'][x] >= 17.0:
         plt.plot(catalog['b10teff'][x],catalog['b10logg'][x],'ro')
     '''
-    '''
+    
     if catalog['DAV'][x] == 1:
        plt.plot(catalog[teffchoice][x],catalog[loggchoice][x],'bo',markersize=7.0)
        #if catalog['K2'][x] == 1:
        #    plt.plot(catalog[teffchoice][x],catalog[loggchoice][x],'go',markersize=7.0)
-       plt.annotate(catalog['WD'][x],(catalog[teffchoice][x],catalog[loggchoice][x]))
+       #plt.annotate(catalog['WD'][x],(catalog[teffchoice][x],catalog[loggchoice][x]))
         #if catalog['Teff'][x] > 13000:
         #    print catalog['WD'][x],catalog['Teff'][x],catalog['logg'][x],catalog['DATE-OBS'][x]
     if catalog['DAV'][x] == 0:
@@ -68,7 +68,7 @@ for x in range(len(catalog['b10teff'])):
         #if catalog['K2'][x] == 1:
         #   plt.plot(catalog[teffchoice][x],catalog[loggchoice][x],'g^',markersize=7.0)
         #plt.annotate(catalog['WD'][x],(catalog[teffchoice][x],catalog[loggchoice][x]))
-    '''
+    
     #    #print catalog['WD'][x],catalog['Teff'][x],catalog['logg'][x]
     #if catalog['SNR'][x] > 300:
     #    plt.plot(catalog['b10teff'][x],catalog['b10logg'][x],'g^',markersize=10.0)
@@ -125,16 +125,17 @@ for x in range(len(catalog['b10teff'])):
     #if catalog['outburst'][x] == 1:
     #    plt.plot(catalog[teffchoice][x],catalog[loggchoice][x],'g^',markersize=10.0)
     #    #print catalog['WD'][x]
-    #if ('1425-811' in catalog['WD'][x]):
-    #    plt.plot(catalog[teffchoice][x],catalog[loggchoice][x],'g^',markersize=10.0)
-    #if ('1422p095' in catalog['WD'][x]):
-    #    plt.plot(catalog[teffchoice][x],catalog[loggchoice][x],'c^',markersize=10.0)
-    #if ('1116' in catalog['WD'][x]) :
-    #    plt.plot(catalog[teffchoice][x],catalog[loggchoice][x],'m^',markersize=10.0)
-    #if ('-153' in catalog['WD'][x]):
-    #    plt.plot(catalog[teffchoice][x],catalog[loggchoice][x],'k^',markersize=10.0)
+    if ('1425-811' in catalog['WD'][x]):
+        plt.plot(catalog[teffchoice][x],catalog[loggchoice][x],'g^',markersize=10.0)
+    if ('1422p095' in catalog['WD'][x]):
+        plt.plot(catalog[teffchoice][x],catalog[loggchoice][x],'c^',markersize=10.0)
+    if ('1116' in catalog['WD'][x]) :
+        plt.plot(catalog[teffchoice][x],catalog[loggchoice][x],'m^',markersize=10.0)
+    if ('-153' in catalog['WD'][x]):
+        plt.plot(catalog[teffchoice][x],catalog[loggchoice][x],'k^',markersize=10.0)
     
     #for x in range(0,len(catalog['WD'])):
+    '''
     if '0940' in catalog['WD'][x]:
         print catalog['WD'][x]
         plt.clf()
@@ -151,17 +152,18 @@ for x in range(len(catalog['b10teff'])):
         plt.annotate('A10',(catalog['a10teff'][x],catalog['a10logg'][x]))
         plt.annotate('B10',(catalog['b10teff'][x],catalog['b10logg'][x]))
         plt.show()
+    '''
     
 
     
 #Plot Gianninas 2011 instability strip
-plt.plot([14000.,11600.],[8.82,7.36],'r')
-plt.plot([11800,10600],[8.88,7.35],'r')
+#plt.plot([14000.,11600.],[8.82,7.36],'r')
+#plt.plot([11800,10600],[8.88,7.35],'r')
 #plt.plot(0.,0.,'bo',label='DAV')
 #plt.plot(0.,0.,'r^',label='NOV')
 #plt.plot(0.,0.,'go',label='K2 DAV')
 #plt.plot(0.,0.,'g^',label='K2 NOV')
-plt.legend(loc=3)
+#plt.legend(loc=3)
 plt.xlabel('Temperature (K)' )
 plt.ylabel('log (g)')
 plt.show()

@@ -273,7 +273,7 @@ def find_solution(combined,logg,teff):
 #===============================================
 
 #Set file type (model_short or master)
-filetype = 'master'
+filetype = 'model_short'
 
 #Set up grid. This is saved in the header of the chi*txt file
 bottomt = 10000.
@@ -510,6 +510,9 @@ snr = []
 nimages = []
 exptime = []
 seeing = []
+mount_az = []
+wind_az = []
+wind_speed = []
 for xdir in directories:
     os.chdir(xdir)
     #print xdir
@@ -526,6 +529,9 @@ for xdir in directories:
         nimages.append(hdulist[0].header['NCOMBINE'])
         exptime.append(hdulist[0].header['EXPTIME'])
         seeing.append(hdulist[0].header['SPECFWHM'])
+        mount_az.append(hdulist[0].header['MOUNT_AZ'])
+        wind_az.append(hdulist[0].header['ENVDIR'])
+        wind_speed.append(hdulist[0].header['ENVWIN'])
         date_obs.append(xdir)
     
 
@@ -534,7 +540,7 @@ for xdir in directories:
 
 exp = np.asarray(nimages)*np.asarray(exptime)
 
-spec_details_table = Table([spec_files,date_obs,RAs,DECs,airmass,snr,exp,seeing],names=['File Name','DATE-OBS','RA','DEC','Airmass','SNR','EXPTIME','SEEING'])
+spec_details_table = Table([spec_files,date_obs,RAs,DECs,airmass,snr,exp,seeing,mount_az,wind_az,wind_speed],names=['File Name','DATE-OBS','RA','DEC','Airmass','SNR','EXPTIME','SEEING','MOUNTAZ','WINDAZ','WINDSPEED'])
 #spec_details_table.write('spec_details.txt',format = 'ascii')
 
 
@@ -553,6 +559,9 @@ newairmass = []
 newsnr = []
 newexp = []
 newseeing = []
+newmountaz  = []
+newwindaz = []
+newwindspeed = []
 a10teffs= []
 a10tefferrs= []
 a10loggs= []
@@ -617,7 +626,9 @@ for x in range(0,len(spec_details_table)):
             newsnr.append(spec_details_table['SNR'][x])
             newexp.append(spec_details_table['EXPTIME'][x])
             newseeing.append(spec_details_table['SEEING'][x])
-
+            newmountaz.append(spec_details_table['MOUNTAZ'][x])
+            newwindaz.append(spec_details_table['WINDAZ'][x])
+            newwindspeed.append(spec_details_table['WINDSPEED'][x])
 
             newwd.append(fit_table['Filename'][y])
             newdate.append(fit_table['DATOBS'][y])
@@ -691,7 +702,7 @@ for x in range(0,len(newra)):
 
 
 
-observed_table = Table([newwd,newfile,newdate,newdate2,radec,decdec,newairmass,newsnr,newexp,newseeing,a10teffs,a10tefferrs,a10loggs,a10loggerrs,b10teffs,b10tefferrs,b10loggs,b10loggerrs,g10teffs,g10tefferrs,g10loggs,g10loggerrs,b9teffs,b9tefferrs,b9loggs,b9loggerrs,b8teffs,b8tefferrs,b8loggs,b8loggerrs,ateffs,atefferrs,aloggs,aloggerrs,bteffs,btefferrs,bloggs,bloggerrs,gteffs,gtefferrs,gloggs,gloggerrs,dteffs,dtefferrs,dloggs,dloggerrs,eteffs,etefferrs,eloggs,eloggerrs,H8teffs,H8tefferrs,H8loggs,H8loggerrs,H9teffs,H9tefferrs,H9loggs,H9loggerrs,H10teffs,H10tefferrs,H10loggs,H10loggerrs],names=['WD','FILENAME','DATE-OBS','DATE-OBS2','RA','DEC','Airmass','SNR','EXPTIME','Seeing','a10teff','a10tefferr','a10logg','a10loggerr','b10teff','b10tefferr','b10logg','b10loggerr','g10teff','g10tefferr','g10logg','g10loggerr','b9teff','b9tefferr','b9logg','b9loggerr','b8teff','b8tefferr','b8logg','b8loggerr','ateff','atefferr','alogg','aloggerr','bteff','btefferr','blogg','bloggerr','gteff','gtefferr','glogg','gloggerr','dteff','dtefferr','dlogg','dloggerr','eteff','etefferr','elogg','eloggerr','H8teff','H8tefferr','H8logg','H8loggerr','H9teff','H9tefferr','H9logg','H9loggerr','H10teff','H10tefferr','H10logg','H10loggerr'])
+observed_table = Table([newwd,newfile,newdate,newdate2,radec,decdec,newairmass,newsnr,newexp,newseeing,newmountaz,newwindaz,newwindspeed,a10teffs,a10tefferrs,a10loggs,a10loggerrs,b10teffs,b10tefferrs,b10loggs,b10loggerrs,g10teffs,g10tefferrs,g10loggs,g10loggerrs,b9teffs,b9tefferrs,b9loggs,b9loggerrs,b8teffs,b8tefferrs,b8loggs,b8loggerrs,ateffs,atefferrs,aloggs,aloggerrs,bteffs,btefferrs,bloggs,bloggerrs,gteffs,gtefferrs,gloggs,gloggerrs,dteffs,dtefferrs,dloggs,dloggerrs,eteffs,etefferrs,eloggs,eloggerrs,H8teffs,H8tefferrs,H8loggs,H8loggerrs,H9teffs,H9tefferrs,H9loggs,H9loggerrs,H10teffs,H10tefferrs,H10loggs,H10loggerrs],names=['WD','FILENAME','DATE-OBS','DATE-OBS2','RA','DEC','Airmass','SNR','EXPTIME','Seeing','MOUNTAZ','WINDAZ','WINDSPEED','a10teff','a10tefferr','a10logg','a10loggerr','b10teff','b10tefferr','b10logg','b10loggerr','g10teff','g10tefferr','g10logg','g10loggerr','b9teff','b9tefferr','b9logg','b9loggerr','b8teff','b8tefferr','b8logg','b8loggerr','ateff','atefferr','alogg','aloggerr','bteff','btefferr','blogg','bloggerr','gteff','gtefferr','glogg','gloggerr','dteff','dtefferr','dlogg','dloggerr','eteff','etefferr','elogg','eloggerr','H8teff','H8tefferr','H8logg','H8loggerr','H9teff','H9tefferr','H9logg','H9loggerr','H10teff','H10tefferr','H10logg','H10loggerr'])
 
 '''
 observed_table.sort('RA')
@@ -741,7 +752,7 @@ catalog_longp = np.array(catalog_data['Longest P'][ibest])
 
 #Take those matching indices and combine the tables
 
-info = Table([observed_table['WD'],observed_table['FILENAME'],catalog_WDname,catalog_othername,observed_table['DATE-OBS'],observed_table['DATE-OBS2'],observed_table['RA'],observed_table['DEC'],observed_table['Airmass'],observed_table['SNR'],observed_table['EXPTIME'],observed_table['Seeing'],observed_table['a10teff'],observed_table['a10tefferr'],observed_table['a10logg'],observed_table['a10loggerr'],observed_table['b10teff'],observed_table['b10tefferr'],observed_table['b10logg'],observed_table['b10loggerr'],observed_table['g10teff'],observed_table['g10tefferr'],observed_table['g10logg'],observed_table['g10loggerr'],observed_table['b9teff'],observed_table['b9tefferr'],observed_table['b9logg'],observed_table['b9loggerr'],observed_table['b8teff'],observed_table['b8tefferr'],observed_table['b8logg'],observed_table['b8loggerr'],observed_table['ateff'],observed_table['atefferr'],observed_table['alogg'],observed_table['aloggerr'],observed_table['bteff'],observed_table['btefferr'],observed_table['blogg'],observed_table['bloggerr'],observed_table['gteff'],observed_table['gtefferr'],observed_table['glogg'],observed_table['gloggerr'],observed_table['dteff'],observed_table['dtefferr'],observed_table['dlogg'],observed_table['dloggerr'],observed_table['eteff'],observed_table['etefferr'],observed_table['elogg'],observed_table['eloggerr'],observed_table['H8teff'],observed_table['H8tefferr'],observed_table['H8logg'],observed_table['H8loggerr'],observed_table['H9teff'],observed_table['H9tefferr'],observed_table['H9logg'],observed_table['H9loggerr'],observed_table['H10teff'],observed_table['H10tefferr'],observed_table['H10logg'],observed_table['H10loggerr'],catalog_RA,catalog_DEC,catalog_dav,catalog_k2,catalog_outburst,catalog_mag,catalog_novlim,catalog_p,catalog_wmp,catalog_shortp,catalog_longp],names=['WD','FILENAME','WDName','OtherName','DATE-OBS','DATE-OBS2','RA','DEC','Airmass','SNR','EXPTIME','Seeing','a10teff','a10tefferr','a10logg','a10loggerr','b10teff','b10tefferr','b10logg','b10loggerr','g10teff','g10tefferr','g10logg','g10loggerr','b9teff','b9tefferr','b9logg','b9loggerr','b8teff','b8tefferr','b8logg','b8loggerr','ateff','atefferr','alogg','aloggerr','bteff','btefferr','blogg','bloggerr','gteff','gtefferr','glogg','gloggerr','dteff','dtefferr','dlogg','dloggerr','eteff','etefferr','elogg','eloggerr','H8teff','H8tefferr','H8logg','H8loggerr','H9teff','H9tefferr','H9logg','H9loggerr','H10teff','H10tefferr','H10logg','H10loggerr','RA2','DEC2','DAV','K2','outburst','Magnitude','NOV_Lim','<P>','WMP','ShortestP','LongestP'])
+info = Table([observed_table['WD'],observed_table['FILENAME'],catalog_WDname,catalog_othername,observed_table['DATE-OBS'],observed_table['DATE-OBS2'],observed_table['RA'],observed_table['DEC'],observed_table['Airmass'],observed_table['SNR'],observed_table['EXPTIME'],observed_table['Seeing'],observed_table['MOUNTAZ'],observed_table['WINDAZ'],observed_table['WINDSPEED'],observed_table['a10teff'],observed_table['a10tefferr'],observed_table['a10logg'],observed_table['a10loggerr'],observed_table['b10teff'],observed_table['b10tefferr'],observed_table['b10logg'],observed_table['b10loggerr'],observed_table['g10teff'],observed_table['g10tefferr'],observed_table['g10logg'],observed_table['g10loggerr'],observed_table['b9teff'],observed_table['b9tefferr'],observed_table['b9logg'],observed_table['b9loggerr'],observed_table['b8teff'],observed_table['b8tefferr'],observed_table['b8logg'],observed_table['b8loggerr'],observed_table['ateff'],observed_table['atefferr'],observed_table['alogg'],observed_table['aloggerr'],observed_table['bteff'],observed_table['btefferr'],observed_table['blogg'],observed_table['bloggerr'],observed_table['gteff'],observed_table['gtefferr'],observed_table['glogg'],observed_table['gloggerr'],observed_table['dteff'],observed_table['dtefferr'],observed_table['dlogg'],observed_table['dloggerr'],observed_table['eteff'],observed_table['etefferr'],observed_table['elogg'],observed_table['eloggerr'],observed_table['H8teff'],observed_table['H8tefferr'],observed_table['H8logg'],observed_table['H8loggerr'],observed_table['H9teff'],observed_table['H9tefferr'],observed_table['H9logg'],observed_table['H9loggerr'],observed_table['H10teff'],observed_table['H10tefferr'],observed_table['H10logg'],observed_table['H10loggerr'],catalog_RA,catalog_DEC,catalog_dav,catalog_k2,catalog_outburst,catalog_mag,catalog_novlim,catalog_p,catalog_wmp,catalog_shortp,catalog_longp],names=['WD','FILENAME','WDName','OtherName','DATE-OBS','DATE-OBS2','RA','DEC','Airmass','SNR','EXPTIME','Seeing','MOUNTAZ','WINDAZ','WINDSPEED','a10teff','a10tefferr','a10logg','a10loggerr','b10teff','b10tefferr','b10logg','b10loggerr','g10teff','g10tefferr','g10logg','g10loggerr','b9teff','b9tefferr','b9logg','b9loggerr','b8teff','b8tefferr','b8logg','b8loggerr','ateff','atefferr','alogg','aloggerr','bteff','btefferr','blogg','bloggerr','gteff','gtefferr','glogg','gloggerr','dteff','dtefferr','dlogg','dloggerr','eteff','etefferr','elogg','eloggerr','H8teff','H8tefferr','H8logg','H8loggerr','H9teff','H9tefferr','H9logg','H9loggerr','H10teff','H10tefferr','H10logg','H10loggerr','RA2','DEC2','DAV','K2','outburst','Magnitude','NOV_Lim','<P>','WMP','ShortestP','LongestP'])
 
 #Sort the table by RA
 info.sort('RA')
@@ -764,5 +775,5 @@ info['Duplicates'] = duplicates
 
 
 #print info.colnames
-newname = 'catalog_' + filetype + '.txt'
+newname = 'catalog_' + filetype + '_fast.txt'
 info.write(newname,format='ascii')

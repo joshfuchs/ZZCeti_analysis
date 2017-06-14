@@ -10,17 +10,17 @@ import numpy as np
 import os
 
 #Read in normalized spectrum
-#night1 = '/afs/cas.unc.edu/depts/physics_astronomy/soar/pipeline/2014/2014-12-10/GOODMAN/ZZCETIS/2017-02-13'#'2014-10-13'
+#night1 = '/srv/two/jtfuchs/Interpolated_Models/Bergeron_new/bottom10000_700'
 #os.chdir(night1)
-spec1 = 'model_wcftb.WD1116p026_930_blue_flux_master_ext_03-15_3.91.txt'
-wdlamb,wdinten = np.genfromtxt(spec1,unpack=True,skip_header=1)
+spec1 = 'norm_PG1149p058toSDSSg_06-01_4.0.txt'
+wdlamb,wdinten,wdsigma = np.genfromtxt(spec1,unpack=True,skip_header=1)
 title = spec1[11:-9] #+ ' : ' + spec1[-14:-9]
 filename = spec1[11:-9]#+'_'+spec1[-14:-9]
 ##os.chdir('../')
 #Read in normalized model
-#night2 = '/afs/cas.unc.edu/depts/physics_astronomy/soar/pipeline/2016/2016-11-25/GOODMAN/ZZCETIS/2017-02-13'#'2014-12-18'
+#night2 = '/srv/two/jtfuchs/Interpolated_Models/Koester_ML2alpha08/bottom10000_700'
 #os.chdir(night2)
-spec2 = 'model_wcftb.WD1116p026_930_blue_flux_master_noext_03-15_3.91.txt'
+spec2 = 'model_PG1149p058toSDSSg_06-01_4.0.txt'
 #spec2 = 'norm_wcftb.WD1116p026_930_blue_flux_master_noext_03-14_3.91.txt'
 #title = 'Teff: ' + spec2[2:7] + ' K, ' + 'log(g): ' + spec2[10] + '.' + spec2[11:13]
 modlamb,modinten = np.genfromtxt(spec2,unpack=True)#,skip_header=1)
@@ -78,8 +78,8 @@ plt.clf()
 if wdlamb.max() > 6000.:
     plt.plot(wdlambalpha-6564.6,wdintenalpha-0.3,'k')
     plt.plot(modlambalpha-6564.6,modintenalpha-0.3,'r')
-plt.plot(wdlambbeta-4862.6,wdintenbeta,'k')
-plt.plot(modlambbeta-4862.6, modintenbeta,'r')
+plt.plot(wdlambbeta-4862.6,wdintenbeta,'k')#,label='Bergeron')
+plt.plot(modlambbeta-4862.6, modintenbeta,'r')#,label='Koester')
 plt.plot(wdlambgamma-4341.6, wdintengamma+0.3,'k')
 plt.plot(modlambgamma-4341.6, modintengamma+0.3,'r')
 plt.plot(wdlambdelta-4102.9, wdintendelta+0.6,'k')
@@ -96,7 +96,7 @@ plt.xlabel('Relative Wavelength (Ang.)')
 plt.ylabel('Relative Flux')
 plt.xlim(-150,150)
 plt.ylim(0,3.0)
-#plt.legend()
+plt.legend()
 #plt.title(title)
 #plt.savefig(filename+'.png',format='png')#,dpi=12000)
 plt.show()

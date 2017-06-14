@@ -175,19 +175,19 @@ def find_solution(combined,logg,teff):
 #os.chdir('/afs/cas.unc.edu/depts/physics_astronomy/clemens/students/group/modelfitting/Koester_06/RESULTS')
 
 
-wdname = 'wcftb.WD2348-244_930_blue_flux_master'
-datedone = '03-08_7.94.txt'
+wdname = 'SDSSJ0832p1429toSDSSg'
+datedone = '06-06_6.0.txt'
 cutteff = True
-teff_limit = 14200.
+teff_limit = 14000.
 
 #Set up grid. This is saved in the header of the chi*txt file
 bottomt = 10000.
-topt = 15000.
+topt = 16000.
 stept = 10.
 teff = np.linspace(bottomt,topt,(topt-bottomt)/stept+1.,endpoint=True)
 
 bottomg = 7.0 
-topg = 9.5
+topg = 9.0
 stepg = 0.05
 logg = np.linspace(bottomg,topg,(topg-bottomg)/stepg+1.,endpoint=True)
 
@@ -230,6 +230,7 @@ except:
     pass
 b10chi = betachi + gammachi + deltachi + epsilonchi + H8chi + H9chi + H10chi
 g10chi = gammachi + deltachi + epsilonchi + H8chi + H9chi + H10chi
+g9chi = gammachi + deltachi + epsilonchi + H8chi + H9chi
 b9chi = betachi + gammachi + deltachi + epsilonchi + H8chi + H9chi
 b8chi = betachi + gammachi + deltachi + epsilonchi + H8chi
 
@@ -328,8 +329,12 @@ if cutteff:
     betachi = betachi[:,0:teffcut]
     H9chi = H9chi[:,0:teffcut]
     H8chi = H8chi[:,0:teffcut]
+    H10chi = H10chi[:,0:teffcut]
     b10chi = b10chi[:,0:teffcut]
     g10chi = g10chi[:,0:teffcut]
+    g9chi = g9chi[:,0:teffcut]
+    deltachi = deltachi[:,0:teffcut]
+    epsilonchi = epsilonchi[:,0:teffcut]
     b9chi = b9chi[:,0:teffcut]
     b8chi = b8chi[:,0:teffcut]
     try:
@@ -363,39 +368,43 @@ except:
 
 print '\nBeta:'
 bteff,btefferr,blogg,bloggerr = find_solution(betachi,logg,teff)
-exit()
-#print '\nGamma:'
-#gteff,gtefferr,glogg,gloggerr = find_solution(gammachi,logg,teff)
-#print '\nDelta:'
-#dteff,dtefferr,dlogg,dloggerr = find_solution(deltachi,logg,teff)
-#print '\nEpsilon:'
-#eteff,etefferr,elogg,eloggerr = find_solution(epsilonchi,logg,teff)
 
-#print '\nH8:'
-#H8teff,H8tefferr,H8logg,H8loggerr = find_solution(H8chi,logg,teff)
+print '\nGamma:'
+gteff,gtefferr,glogg,gloggerr = find_solution(gammachi,logg,teff)
+print '\nDelta:'
+dteff,dtefferr,dlogg,dloggerr = find_solution(deltachi,logg,teff)
+print '\nEpsilon:'
+eteff,etefferr,elogg,eloggerr = find_solution(epsilonchi,logg,teff)
 
-
-#print '\nH9:'
-#H9teff,H9tefferr,H9logg,H9loggerr = find_solution(H9chi,logg,teff)
+print '\nH8:'
+H8teff,H8tefferr,H8logg,H8loggerr = find_solution(H8chi,logg,teff)
 
 
-#print '\nH10:'
-#H10teff,H10tefferr,H10logg,H10loggerr = find_solution(H10chi,logg,teff)
+print '\nH9:'
+H9teff,H9tefferr,H9logg,H9loggerr = find_solution(H9chi,logg,teff)
+
+
+print '\nH10:'
+H10teff,H10tefferr,H10logg,H10loggerr = find_solution(H10chi,logg,teff)
 
 print '\nBeta - H10:'
 b10teff,b10tefferr,b10logg,b10loggerr = find_solution(b10chi,logg,teff)
+
 print '\nGamma - H10:'
 g10teff,g10tefferr,g10logg,g10loggerr = find_solution(g10chi,logg,teff)
 
+print '\nGamma - H9:'
+g9teff,g9tefferr,g9logg,g9loggerr = find_solution(g9chi,logg,teff)
+
 print '\nBeta - H9:'
 b9teff,b9tefferr,b9logg,b9loggerr = find_solution(b9chi,logg,teff)
-print '\nBeta - H9:'
+print '\nBeta - H8:'
 b8teff,b8tefferr,b8logg,b8loggerr = find_solution(b8chi,logg,teff)
 
 #print '\nCombined:'
 #combinedteff,combinedtefferr,combinedlogg,combinedloggerr = find_solution(combined,logg,teff)
 
-exit()
+#exit()
 
 #interpolation = RectBivariateSpline(loggsmall,teffsmall,combinedsmall,kx=3,ky=3,s=0) 
 interpolation = RectBivariateSpline(logg,teff,combined,kx=3,ky=3,s=0) 
@@ -404,7 +413,7 @@ levels = [1,2,3,10,100,200,300,400,500,600,700] # range(0,1000,300)
 #plot contour plot
 plt.figure()
 #CS = plt.contour(teff,loggsmall,combinedsmall-lowchi)#,levels=levels)
-CS = plt.contourf(teff,logg,betachi,100,cmap='jet')#,levels=levels)
+CS = plt.contourf(teff,logg,b9chi,100,cmap='jet')#,levels=levels)
 plt.colorbar(CS)
 plt.xlim(15000,10000)
 plt.ylim(9.5,7.0)

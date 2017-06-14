@@ -44,8 +44,8 @@ def find_solution(combined,logg,teff):
     # Find minimum point, move + and - 10 and 10  K to fit 5 parabolas in logg, take those centers, fit parabola
     combinedindex = np.unravel_index(combined.argmin(),combined.shape)
     combinedlogg, combinedteff = logg[combinedindex[0]], teff[combinedindex[1]]
-    rangeg = 9. #Number of grid points in logg space around lowest value to pick
-    ranget = 9. #Number of grid points in Teff space around lowest value to pick
+    rangeg = 3. #Number of grid points in logg space around lowest value to pick
+    ranget = 3. #Number of grid points in Teff space around lowest value to pick
     
     #pick out region of grid with spacing of rangeg and ranget around the minimum
     if combinedindex[0]-rangeg < 0:
@@ -157,19 +157,21 @@ def find_solution(combined,logg,teff):
 
 #Set up grid. This is saved in the header of the chi*txt file
 bottomt = 10000.
-topt = 15000.
+topt = 16000.
 stept = 10.
 teff = np.linspace(bottomt,topt,(topt-bottomt)/stept+1.,endpoint=True)
 
 bottomg = 7.0 
-topg = 9.5
+topg = 9.0
 stepg = 0.05
 logg = np.linspace(bottomg,topg,(topg-bottomg)/stepg+1.,endpoint=True)
 
 
 
 #Get list of directories in current directory. Only keep if it is a date by looking for ./2
-directories = [x[0] for x in os.walk('./') if x[0][0:3]=='./2']
+#directories = [x[0] for x in os.walk('./') if x[0][0:3]=='./2']
+directories = [x[0] for x in os.walk('./') if x[0][-1]=='A']
+
 
 filename = []
 direc = [] 
@@ -233,11 +235,13 @@ for xdir in directories:
     os.chdir(xdir)
     print xdir
 
-    file_list = sorted(glob('chi*master*beta*txt'))
+    ###file_list = sorted(glob('chi*master*beta*txt'))
+    file_list = sorted(glob('chi*beta*txt'))
     print file_list
     for new_file in file_list:
         print new_file
-        first_part = new_file[0:new_file.find('master')] + 'master_'
+        ###first_part = new_file[0:new_file.find('master')] + 'master_'
+        first_part = new_file[0:new_file.find('SDSSg')] + 'SDSSg_'
         second_part = new_file[-15:]
         if second_part[0] == 'a':
             second_part = second_part[1:]
@@ -311,7 +315,8 @@ for xdir in directories:
         g10teff,g10tefferr,g10logg,g10loggerr = find_solution(g10chi,logg,teff)
         
 
-        filename.append(new_file[9:new_file.find('_930')])
+        ###filename.append(new_file[9:new_file.find('_930')])
+        filename.append(new_file[4:new_file.find('_be')])
         direc.append(xdir)
         a10teffs.append(str(a10teff))
         a10tefferrs.append(str(a10tefferr))
@@ -371,10 +376,10 @@ for xdir in directories:
     os.chdir('../')
 
 
-#info = Table([filename,direc,a10teffs,a10tefferrs,a10loggs,a10loggerrs,b10teffs,b10tefferrs,b10loggs,b10loggerrs,g10teffs,g10tefferrs,g10loggs,g10loggerrs,b9teffs,b9tefferrs,b9loggs,b9loggerrs,b8teffs,b8tefferrs,b8loggs,b8loggerrs,ateffs,atefferrs,aloggs,aloggerrs,bteffs,btefferrs,bloggs,bloggerrs,gteffs,gtefferrs,gloggs,gloggerrs,dteffs,dtefferrs,dloggs,dloggerrs,eteffs,etefferrs,eloggs,eloggerrs,H8teffs,H8tefferrs,H8loggs,H8loggerrs,H9teffs,H9tefferrs,H9loggs,H9loggerrs,H10teffs,H10tefferrs,H10loggs,H10loggerrs],names=['Filename','DATOBS','a10teff','a10tefferr','a10logg','a10loggerr','b10teff','b10tefferr','b10logg','b10loggerr','g10teff','g10tefferr','g10logg','g10loggerr','b9teff','b9tefferr','b9logg','b9loggerr','b8teff','b8tefferr','b8logg','b8loggerr','ateff','atefferr','alogg','aloggerr','bteff','btefferr','blogg','bloggerr','gteff','gtefferr','glogg','gloggerr','dteff','dtefferr','dlogg','dloggerr','eteff','etefferr','elogg','eloggerr','H8teff','H8tefferr','H8logg','H8loggerr','H9teff','H9tefferr','H9logg','H9loggerr','H10teff','H10tefferr','H10logg','H10loggerr'])
-#info.write('all_teff_logg_flux.txt',format='ascii')
+info = Table([filename,direc,a10teffs,a10tefferrs,a10loggs,a10loggerrs,b10teffs,b10tefferrs,b10loggs,b10loggerrs,g10teffs,g10tefferrs,g10loggs,g10loggerrs,b9teffs,b9tefferrs,b9loggs,b9loggerrs,b8teffs,b8tefferrs,b8loggs,b8loggerrs,ateffs,atefferrs,aloggs,aloggerrs,bteffs,btefferrs,bloggs,bloggerrs,gteffs,gtefferrs,gloggs,gloggerrs,dteffs,dtefferrs,dloggs,dloggerrs,eteffs,etefferrs,eloggs,eloggerrs,H8teffs,H8tefferrs,H8loggs,H8loggerrs,H9teffs,H9tefferrs,H9loggs,H9loggerrs,H10teffs,H10tefferrs,H10loggs,H10loggerrs],names=['Filename','DATOBS','a10teff','a10tefferr','a10logg','a10loggerr','b10teff','b10tefferr','b10logg','b10loggerr','g10teff','g10tefferr','g10logg','g10loggerr','b9teff','b9tefferr','b9logg','b9loggerr','b8teff','b8tefferr','b8logg','b8loggerr','ateff','atefferr','alogg','aloggerr','bteff','btefferr','blogg','bloggerr','gteff','gtefferr','glogg','gloggerr','dteff','dtefferr','dlogg','dloggerr','eteff','etefferr','elogg','eloggerr','H8teff','H8tefferr','H8logg','H8loggerr','H9teff','H9tefferr','H9logg','H9loggerr','H10teff','H10tefferr','H10logg','H10loggerr'])
+info.write('all_teff_logg_K2.txt',format='ascii')
 
-$shorttable = Table([filename,direc,b10tefferrs,b10loggerrs],names=['Filename','DATOBS','b10tefferr','b10loggerr'])
-$shorttable.write('new_errors.txt',format='ascii')
+#shorttable = Table([filename,direc,b10tefferrs,b10loggerrs],names=['Filename','DATOBS','b10tefferr','b10loggerr'])
+#shorttable.write('new_errors.txt',format='ascii')
 
 #f.close()

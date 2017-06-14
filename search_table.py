@@ -18,8 +18,8 @@ fitting_solutions.txt contains: blue filename, red filenames, best model, best T
 
 
 
-catalog = Table.read('catalog_flux_clean.txt',format='ascii')  
-
+#catalog = Table.read('catalog_master_clean.txt',format='ascii')  
+catalog = Table.read('catalog_flux_clean_nodup.txt',format='ascii')  
 
 task = raw_input('What would you like to see? (star, range, filter, duplicates, allstars, K2) ')
 
@@ -27,7 +27,7 @@ if task == 'star':
     star_name = raw_input('Name of the star? ')
     for x in range(0,len(catalog['FILENAME'])):
         if catalog['FILENAME'][x].lower().__contains__(star_name.lower()) == True:
-            print catalog['FILENAME'][x], catalog['DATE-OBS'][x], catalog['b10teff'][x], catalog['b10tefferr'][x],  catalog['b10logg'][x], catalog['b10loggerr'][x], catalog['EXPTIME'][x], catalog['Magnitude'][x]
+            print catalog['FILENAME'][x], catalog['b10teff'][x],catalog['b10logg'][x]
             #print 'b10: ', catalog['b10teff'][x], catalog['b10logg'][x]
             #print 'alpha: ', catalog['ateff'][x], catalog['alogg'][x]
             #print 'beta: ', catalog['bteff'][x], catalog['blogg'][x]
