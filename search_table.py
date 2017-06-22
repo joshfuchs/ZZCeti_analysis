@@ -19,15 +19,20 @@ fitting_solutions.txt contains: blue filename, red filenames, best model, best T
 
 
 #catalog = Table.read('catalog_master_clean.txt',format='ascii')  
-catalog = Table.read('catalog_flux_clean_nodup.txt',format='ascii')  
+catalog = Table.read('catalog_master.txt',format='ascii')  
 
 task = raw_input('What would you like to see? (star, range, filter, duplicates, allstars, K2) ')
+
+if task == 'snr':
+    for x in range(0,len(catalog['FILENAME'])):
+        if catalog['SNR'][x] < 80.:
+            print catalog['FILENAME'][x], catalog['DATE-OBS'][x], catalog['SNR'][x]
 
 if task == 'star':
     star_name = raw_input('Name of the star? ')
     for x in range(0,len(catalog['FILENAME'])):
         if catalog['FILENAME'][x].lower().__contains__(star_name.lower()) == True:
-            print catalog['FILENAME'][x], catalog['b10teff'][x],catalog['b10logg'][x]
+            print catalog['FILENAME'][x], catalog['b10teff'][x],catalog['b10logg'][x],catalog['g10teff'][x],catalog['g10logg'][x], catalog['DATE-OBS'][x]
             #print 'b10: ', catalog['b10teff'][x], catalog['b10logg'][x]
             #print 'alpha: ', catalog['ateff'][x], catalog['alogg'][x]
             #print 'beta: ', catalog['bteff'][x], catalog['blogg'][x]
@@ -38,6 +43,13 @@ if task == 'star':
             #print 'H9: ', catalog['H9teff'][x], catalog['H9logg'][x]
             #print 'H10: ', catalog['H10teff'][x], catalog['H10logg'][x]
             #print catalog[x]
+
+if task == 'date':
+    star_name = raw_input('Date? ')
+    for x in range(0,len(catalog['FILENAME'])):
+        if catalog['DATE-OBS'][x].__contains__(star_name) == True:
+            print catalog['FILENAME'][x], catalog['b8teff'][x],catalog['b8logg'][x]
+
 
 if task == 'range':
     trange = raw_input('Would you like to set a temperature range? (yes/no) ')
@@ -56,7 +68,7 @@ if task == 'range':
         gupper = 20.
     for x in np.arange(len(catalog['ateff'])):
         if catalog['ateff'][x] <= tupper and catalog['ateff'][x] >= tlower and catalog['alogg'][x] <= gupper and catalog['alogg'][x] >= glower:
-            print catalog['FILENAME'][x], catalog['DATE-OBS'][x], catalog['ateff'][x], catalog['alogg'][x]#,catalog['DAV'][x]
+            print catalog['FILENAME'][x], catalog['DATE-OBS'][x], catalog['b10teff'][x], catalog['b10logg'][x], catalog['g10teff'][x], catalog['g10logg'][x]
 
 if task == 'filter':
     which_filter = raw_input('Name of filter (DAV,K2,outburst): ')
@@ -75,7 +87,7 @@ if task == 'duplicates':
 
 if task == 'allstars':
     for x in range(0,len(catalog['FILENAME'])):
-        print catalog['WD'][x]
+        print catalog['WD'][x], catalog['FILENAME'][x], catalog['DATE-OBS'][x], catalog['b10teff'][x], catalog['b10logg'][x],catalog['g10teff'][x], catalog['g10logg'][x]
 
 if task == 'K2':
     for x in range(0,len(catalog['FILENAME'])):
