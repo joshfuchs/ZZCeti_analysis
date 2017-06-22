@@ -16,6 +16,7 @@ import mpfit
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.interpolate import RectBivariateSpline
+import analysis_tools as at
 
 
 def parabola(x,p):
@@ -51,148 +52,14 @@ def fitparaboloid(p,fjac=None,x=None,y=None,z=None,err=None):
     return([status,(z-model)/err])
 
 
-def find_solution(combined,logg,teff):
-    #======================================
-    # Fit a parabola in the logg direction, then take the minimum from those fits, and fit a parabola in the Teff direction
-    # Find minimum point, move + and - 10 and 10  K to fit 5 parabolas in logg, take those centers, fit parabola
-    combinedindex = np.unravel_index(combined.argmin(),combined.shape)
-    combinedlogg, combinedteff = logg[combinedindex[0]], teff[combinedindex[1]]
-    rangeg = 3. #Number of grid points in logg space around lowest value to pick
-    ranget = 3. #Number of grid points in Teff space around lowest value to pick
-    
-    #pick out region of grid with spacing of rangeg and ranget around the minimum
-    if combinedindex[0]-rangeg < 0:
-        ##loggsmall = logg[0:combinedindex[0]+rangeg+1]
-        loggsmall = logg[0:2*rangeg+1]
-        logglow = 0
-        ##logghigh = combinedindex[0]+rangeg+1
-        logghigh = 2*rangeg+1
-    elif combinedindex[0]+rangeg >= len(logg):
-        ##loggsmall = logg[combinedindex[0]-rangeg:-1]
-        loggsmall = logg[-2*rangeg-1:]
-        ##logglow = combinedindex[0]-rangeg
-        logglow = -2*rangeg-1
-        logghigh = -1
-    else:
-        loggsmall = logg[combinedindex[0]-rangeg:combinedindex[0]+rangeg+1]
-        logglow = combinedindex[0]-rangeg
-        logghigh = combinedindex[0]+rangeg+1
-    if combinedindex[1]-ranget < 0:
-        ##teffsmall = teff[0:combinedindex[1]+ranget+1]
-        teffsmall = teff[0:2*ranget+1]
-        tefflow = 0
-        ##teffhigh = combinedindex[1]+ranget+1
-        teffhigh = 2*ranget+1
-    elif combinedindex[1]+ranget >= len(teff):
-        ##teffsmall = teff[combinedindex[1]-ranget:-1]
-        teffsmall = teff[-2*ranget-1:]
-        ##tefflow = combinedindex[1]-ranget
-        tefflow = -2*ranget-1
-        teffhigh = -1
-    else:
-        teffsmall = teff[combinedindex[1]-ranget:combinedindex[1]+ranget+1]
-        tefflow = combinedindex[1]-ranget
-        teffhigh = combinedindex[1]+ranget+1
-    
-    
-    
-    #Get the low and high values for each
-    lowg, highg = loggsmall[0], loggsmall[-1]
-    lowt, hight = teffsmall[0], teffsmall[-1]
-    teffsmallgrid, loggsmallgrid = np.meshgrid(teffsmall,loggsmall)
-    if (logghigh == -1) and (teffhigh == -1):
-        combinedsmall = combined[logglow:,tefflow:]
-    elif logghigh == -1:
-        combinedsmall = combined[logglow:,tefflow:teffhigh]
-    elif teffhigh == -1:
-        combinedsmall = combined[logglow:logghigh,tefflow:]
-    else:
-        combinedsmall = combined[logglow:logghigh,tefflow:teffhigh]
-
-    #Create finer small grid with spacing of 1 K and 0.005 logg
-    lenteffgrid = np.round(hight-lowt+1.) #Round to ensure we get the correct number of points. Otherwise, occasionally face a strange int/float issue.
-    teffsmallfine = np.linspace(lowt,hight,lenteffgrid,endpoint=True)
-    lenlogggrid = np.round((highg-lowg)*1000.+1.)
-    loggsmallfine = np.linspace(lowg,highg,lenlogggrid,endpoint=True)
-    teffsmallfinegrid, loggsmallfinegrid = np.meshgrid(teffsmallfine,loggsmallfine)
-
-    #Fit a polynomial to different Teff values to find center of logg
-    loggval = np.zeros(len(combinedsmall[:,0]))
-    chival = np.zeros(len(combinedsmall[:,0]))
-    for x in np.arange(len(combinedsmall[:,0])):
-        pol = np.polyfit(loggsmall,combinedsmall[:,x],2)
-        pc = np.poly1d(pol)
-        if x == np.median(np.arange(len(combinedsmall[:,0]))):
-            pckeep = np.poly1d(pol)
-        loggval[x] = loggsmallfine[pc(loggsmallfine).argmin()]
-        chival[x] = pc(loggval[x])
-        #plt.clf()
-        #plt.plot(loggsmall,combinedsmall[:,x],'b^')
-        #plt.plot(loggsmallfine,pc(loggsmallfine))
-        #plt.show()
-
-    #Now take these values and fit a polynomial in the Teff direction
-    tpol = np.polyfit(teffsmall,chival,2)
-    tpp = np.poly1d(tpol)
-
-    bestteff = teffsmallfine[tpp(teffsmallfine).argmin()]
-    #print chival, chival.min()
-    #print tpp(bestteff)
-    #plt.clf()
-    #plt.plot(teffsmall,chival,'g^')
-    #plt.plot(teffsmallfine,tpp(teffsmallfine),'k')
-    #plt.plot(bestteff,tpp(bestteff),'ms')
-    #plt.show()
-
-    #Take these solutions and find the errors
-    deltateff = tpp(teffsmallfine)-tpp(bestteff)
-    lowterr = teffsmallfine[np.where(deltateff < 2.3)].min()-1.
-    highterr =  teffsmallfine[np.where(deltateff < 2.3)].max()+1.
-    tefferr = ((bestteff-lowterr) + (highterr-bestteff)) / 2.
-    
-    deltalogg = pckeep(loggsmallfine) - pckeep(loggval.min())
-    bestlogg = loggval.min()
-    lowloggerr =  loggsmallfine[np.where(deltalogg < 2.3)].min()-0.001
-    highloggerr =  loggsmallfine[np.where(deltalogg < 2.3)].max()+0.001
-    loggerr = ((bestlogg-lowloggerr) + (highloggerr-bestlogg)) / 2.
-    
-    print 'Teff = ', bestteff , '+/-' , tefferr
-    print 'logg = ', bestlogg,  '+/-' , loggerr
-    
-    #plt.clf()
-    #plt.plot(loggsmallfine,deltalogg)
-    #plt.show()
-    return bestteff, tefferr, bestlogg, loggerr
-
-
-
-
-
-
-
-
-
 #os.chdir('/afs/cas.unc.edu/depts/physics_astronomy/clemens/students/group/modelfitting/Koester_06/RESULTS')
 
 
-wdname = 'SDSSJ0832p1429toSDSSg'
-datedone = '06-06_6.0.txt'
-cutteff = True
+wdname = 'wcftb.WD1422p095_930_blue_flux_master'
+datedone = '06-20_4.28.txt'
+cutteff = False
 teff_limit = 14000.
 
-#Set up grid. This is saved in the header of the chi*txt file
-bottomt = 10000.
-topt = 16000.
-stept = 10.
-teff = np.linspace(bottomt,topt,(topt-bottomt)/stept+1.,endpoint=True)
-
-bottomg = 7.0 
-topg = 9.0
-stepg = 0.05
-logg = np.linspace(bottomg,topg,(topg-bottomg)/stepg+1.,endpoint=True)
-
-
-teffgrid, logggrid = np.meshgrid(teff,logg)
 
 #Set up filenames to read
 allfile = 'chi_' + wdname + '_' + datedone
@@ -205,6 +72,35 @@ epsilonfile = 'chi_' + wdname + '_epsilon_' + datedone
 H8file = 'chi_' + wdname + '_H8_' + datedone
 H9file = 'chi_' + wdname + '_H9_' + datedone
 H10file = 'chi_' + wdname + '_H10_' + datedone
+
+#Read in first grid to determine range of spacing of variables
+
+with open(allfile,'r') as f:
+    first_line = f.readline()
+try:
+    bottomg,stepg,topg,bottomt,stept,topt,numpoints = [float(x) for x in first_line[2:].split(",")]
+except:
+    bottomg,stepg,topg,bottomt,stept,topt = [float(x) for x in first_line[2:].split(",")]
+teff = np.linspace(bottomt,topt,(topt-bottomt)/stept+1.,endpoint=True)
+logg = np.linspace(bottomg,topg,(topg-bottomg)/stepg+1.,endpoint=True)
+teffgrid, logggrid = np.meshgrid(teff,logg)
+'''
+#Set up grid. This is saved in the header of the chi*txt file
+bottomt = 10000.
+topt = 15000.
+stept = 10.
+teff = np.linspace(bottomt,topt,(topt-bottomt)/stept+1.,endpoint=True)
+
+bottomg = 7.0 
+topg = 9.5
+stepg = 0.05
+logg = np.linspace(bottomg,topg,(topg-bottomg)/stepg+1.,endpoint=True)
+
+teffgrid, logggrid = np.meshgrid(teff,logg)
+'''
+
+
+
 
 #Read in saved grids
 allchi  = np.genfromtxt(allfile,dtype='d')
@@ -220,7 +116,21 @@ epsilonchi = np.genfromtxt(epsilonfile,dtype='d')
 H8chi = np.genfromtxt(H8file,dtype='d')
 H9chi = np.genfromtxt(H9file,dtype='d')
 H10chi = np.genfromtxt(H10file,dtype='d')
-
+'''
+#Convert to reduced chi-square
+allchi /= numpoints
+try:
+    alphachi /= numpoints
+except:
+    pass
+betachi /= numpoints
+gammachi /= numpoints
+deltachi /= numpoints
+epsilonchi /= numpoints
+H8chi /= numpoints
+H9chi /= numpoints
+H10chi /= numpoints
+'''
 #combine different lines
 print 'Shape: ', allchi.shape
 combined =  betachi + gammachi + deltachi + epsilonchi + H8chi + H9chi + H10chi#alphachi + betachi + gammachi + deltachi + epsilonchi + H8chi + H9chi + H10chi
@@ -231,6 +141,7 @@ except:
 b10chi = betachi + gammachi + deltachi + epsilonchi + H8chi + H9chi + H10chi
 g10chi = gammachi + deltachi + epsilonchi + H8chi + H9chi + H10chi
 g9chi = gammachi + deltachi + epsilonchi + H8chi + H9chi
+g8chi = gammachi + deltachi + epsilonchi + H8chi
 b9chi = betachi + gammachi + deltachi + epsilonchi + H8chi + H9chi
 b8chi = betachi + gammachi + deltachi + epsilonchi + H8chi
 
@@ -249,7 +160,7 @@ b8chi = betachi + gammachi + deltachi + epsilonchi + H8chi
 fig = plt.figure(1)
 ax = fig.gca(projection='3d')
 sur = ax.plot_wireframe(teffgrid,logggrid,combined,rstride=1,cstride=1)
-#ax.scatter(np.ravel(teffsmallgrid),np.ravel(loggsmallgrid),np.ravel(combinedsmall),marker='o',s=30,c='r')
+#ax.scatter(np.ravel(teffgrid),np.ravel(logggrid),np.ravel(combined),marker='o',s=30,c='r')
 #plt.show()
 #exit()
 
@@ -337,6 +248,7 @@ if cutteff:
     epsilonchi = epsilonchi[:,0:teffcut]
     b9chi = b9chi[:,0:teffcut]
     b8chi = b8chi[:,0:teffcut]
+    g8chi = g8chi[:,0:teffcut]
     try:
         alphachi = alphachi[:,0:teffcut]
         a10chi = a10chi[:,0:teffcut]
@@ -359,50 +271,54 @@ H10chi = H10chi[:,teffcut:]
 #Find solution for whatever combinations you want
 try:
     print '\nAlpha:'
-    ateff,atefferr,alogg,aloggerr = find_solution(alphachi,logg,teff)
+    ateff,atefferr,alogg,aloggerr = at.find_solution(alphachi,logg,teff)
     print '\nAlpha-10:'
-    a10teff,a10tefferr,a10logg,a10loggerr = find_solution(a10chi,logg,teff)
+    a10teff,a10tefferr,a10logg,a10loggerr = at.find_solution(a10chi,logg,teff)
 except:
     pass
 #exit()
 
 print '\nBeta:'
-bteff,btefferr,blogg,bloggerr = find_solution(betachi,logg,teff)
+bteff,btefferr,blogg,bloggerr = at.find_solution(betachi,logg,teff)
 
 print '\nGamma:'
-gteff,gtefferr,glogg,gloggerr = find_solution(gammachi,logg,teff)
+gteff,gtefferr,glogg,gloggerr = at.find_solution(gammachi,logg,teff)
 print '\nDelta:'
-dteff,dtefferr,dlogg,dloggerr = find_solution(deltachi,logg,teff)
+dteff,dtefferr,dlogg,dloggerr = at.find_solution(deltachi,logg,teff)
 print '\nEpsilon:'
-eteff,etefferr,elogg,eloggerr = find_solution(epsilonchi,logg,teff)
+eteff,etefferr,elogg,eloggerr = at.find_solution(epsilonchi,logg,teff)
 
 print '\nH8:'
-H8teff,H8tefferr,H8logg,H8loggerr = find_solution(H8chi,logg,teff)
+H8teff,H8tefferr,H8logg,H8loggerr = at.find_solution(H8chi,logg,teff)
 
 
 print '\nH9:'
-H9teff,H9tefferr,H9logg,H9loggerr = find_solution(H9chi,logg,teff)
+H9teff,H9tefferr,H9logg,H9loggerr = at.find_solution(H9chi,logg,teff)
 
 
 print '\nH10:'
-H10teff,H10tefferr,H10logg,H10loggerr = find_solution(H10chi,logg,teff)
+H10teff,H10tefferr,H10logg,H10loggerr = at.find_solution(H10chi,logg,teff)
 
 print '\nBeta - H10:'
-b10teff,b10tefferr,b10logg,b10loggerr = find_solution(b10chi,logg,teff)
+b10teff,b10tefferr,b10logg,b10loggerr = at.find_solution(b10chi,logg,teff)
 
 print '\nGamma - H10:'
-g10teff,g10tefferr,g10logg,g10loggerr = find_solution(g10chi,logg,teff)
+g10teff,g10tefferr,g10logg,g10loggerr = at.find_solution(g10chi,logg,teff)
 
 print '\nGamma - H9:'
-g9teff,g9tefferr,g9logg,g9loggerr = find_solution(g9chi,logg,teff)
+g9teff,g9tefferr,g9logg,g9loggerr = at.find_solution(g9chi,logg,teff)
 
 print '\nBeta - H9:'
-b9teff,b9tefferr,b9logg,b9loggerr = find_solution(b9chi,logg,teff)
+b9teff,b9tefferr,b9logg,b9loggerr = at.find_solution(b9chi,logg,teff)
 print '\nBeta - H8:'
-b8teff,b8tefferr,b8logg,b8loggerr = find_solution(b8chi,logg,teff)
+b8teff,b8tefferr,b8logg,b8loggerr = at.find_solution(b8chi,logg,teff)
+
+print '\nGamma - H8:'
+g8teff,g8tefferr,g8logg,g8loggerr = at.find_solution(g8chi,logg,teff)
+
 
 #print '\nCombined:'
-#combinedteff,combinedtefferr,combinedlogg,combinedloggerr = find_solution(combined,logg,teff)
+#combinedteff,combinedtefferr,combinedlogg,combinedloggerr = at.find_solution(combined,logg,teff)
 
 #exit()
 
